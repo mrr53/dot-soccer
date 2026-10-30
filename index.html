@@ -1,0 +1,1658 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#06231a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>فوتبال نقطه و خط</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06231a; --panel:rgba(7,30,22,.96); --ink:#effff6; --muted:#9fc9b5;
+  --red:#ff4d5e; --blue:#3da5ff; --gold:#ffd166; --purple:#b78cff; --line:rgba(255,255,255,.14);
+  --grass1:#1d7a43; --grass2:#22894c;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;-webkit-text-size-adjust:100%}
+body{
+  background:radial-gradient(ellipse at top,#0f5a3c 0%,var(--bg) 60%) fixed, var(--bg);
+  color:var(--ink); font-family:Vazirmatn,Tahoma,system-ui,sans-serif;
+  user-select:none; -webkit-user-select:none; touch-action:manipulation; overscroll-behavior:none;
+}
+button,input,select{font-family:inherit;color:inherit}
+button{cursor:pointer;border:0}
+.hidden{display:none!important}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+@media (hover:hover){ .btn:hover,.bar button:hover,.oc-btns button:hover,.icon:hover,.lg-item:hover{filter:brightness(1.18)} }
+
+/* ---------- Menu ---------- */
+#menu{align-items:center;overflow-y:auto;padding-inline:16px}
+.menu-card{width:100%;max-width:440px;padding:24px 4px;text-align:center;margin:auto 0}
+.logo{font-size:64px;line-height:1;filter:drop-shadow(0 6px 18px rgba(0,0,0,.5));animation:bob 2.4s ease-in-out infinite;display:inline-block}
+@keyframes bob{50%{transform:translateY(-8px) rotate(20deg)}}
+h1{margin:10px 0 0;font-size:clamp(26px,6vw,34px);font-weight:900}
+.sub{margin:2px 0 20px;color:var(--muted);font-size:14px;direction:ltr}
+.btn{display:block;width:100%;margin:10px 0;padding:15px 16px;border-radius:16px;font-size:17px;font-weight:700;
+  background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.05));border:1px solid var(--line);
+  box-shadow:0 6px 18px rgba(0,0,0,.25);transition:transform .12s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(180deg,#ffd166,#f4a93a);color:#2b1c00;border-color:transparent}
+.btn.super{background:linear-gradient(135deg,#6d3cff,#c04bff 60%,#ff6fb5);border-color:transparent;color:#fff;letter-spacing:.5px}
+.btn.ghost{background:transparent;border-style:dashed}
+.btn.danger{background:rgba(255,77,94,.12);border-color:rgba(255,77,94,.5);color:#ffb3bb}
+.btn.sm{padding:10px 12px;font-size:15px;margin:6px 0}
+.panel{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:16px;padding:12px;margin:-2px 0 10px;text-align:right}
+.panel label,.fl-lbl{display:block;font-size:13px;color:var(--muted);margin:8px 2px 6px}
+.panel p{margin:4px 2px 8px;font-size:14px;color:#e2d4ff;line-height:1.8}
+.seg{display:flex;gap:6px;margin-bottom:8px}
+.seg button{flex:1;padding:10px 6px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid var(--line);font-size:14px}
+.seg button.on{background:var(--gold);color:#2b1c00;font-weight:800}
+.row{display:flex;gap:8px;align-items:center}
+.row.small{justify-content:center;margin-top:8px;flex-wrap:wrap}
+.row.small button{background:none;color:var(--muted);font-size:15px;padding:8px 12px}
+.txt,select.txt{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.3);font-size:16px;outline:none}
+select.txt option{background:#0b3d2e}
+input.code{flex:1;min-width:0;padding:13px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.3);
+  font:800 20px/1 Vazirmatn,monospace;text-align:center;letter-spacing:4px;text-transform:uppercase;direction:ltr;outline:none}
+.row .btn{margin:0;width:auto;padding:13px 18px}
+.mem{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:4px}
+.mem button{background:none;color:#ffb3bb;font-size:13px;padding:6px 4px;text-decoration:underline}
+
+/* ---------- Game layout (portrait: stacked · landscape/desktop: side panel) ---------- */
+#game{align-items:center}
+.side{display:contents}
+.hud{order:1;display:flex;align-items:center;gap:8px;padding:10px 12px 4px;width:100%;max-width:680px}
+.turn{order:2}
+.board-wrap{order:3;position:relative;flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;padding:4px}
+.bar{order:4}
+.over-card{order:5}
+@media (orientation:landscape) and (min-width:600px){
+  #game{flex-direction:row;justify-content:center;align-items:center;gap:clamp(12px,3vw,48px);
+    padding:max(12px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+  #game .side{display:flex;flex-direction:column;justify-content:center;gap:12px;width:clamp(280px,30vw,420px);max-height:100%;overflow-y:auto;order:1;flex:none}
+  #game .hud,#game .turn,#game .bar,#game .over-card{order:0;width:100%;max-width:none;margin:0}
+  #game .hud{padding:0;flex-wrap:wrap;justify-content:space-between}
+  #game .turn{white-space:normal;font-size:16px;padding:10px 16px}
+  #game .bar{padding:0;justify-content:stretch}
+  #game .bar>button{flex:1}
+  #game .board-wrap{order:2;flex:0 1 auto;height:100%;width:auto;aspect-ratio:556/862;max-width:calc(100vw - 340px);padding:0}
+  #game .scores{order:3;flex:1 1 100%;margin-top:4px}
+  #game .score{flex-direction:column;justify-content:center;gap:2px;padding:10px 8px;text-align:center}
+  #game .score.p2{flex-direction:column-reverse}
+  #game .score .nm{max-width:100%;font-size:14px}
+  #game .score b{font-size:clamp(34px,7vh,52px)}
+}
+@media (orientation:landscape) and (min-width:600px) and (max-height:500px){
+  #game .score{padding:4px 8px} #game .score b{font-size:28px} #game .side{gap:8px}
+  #game .bar button{padding:8px 10px}
+}
+.icon{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-size:19px;flex:none}
+.scores{flex:1;display:flex;align-items:stretch;justify-content:center;gap:8px;min-width:0}
+.score{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 12px;border-radius:14px;
+  background:rgba(0,0,0,.28);border:2px solid transparent;transition:all .25s}
+.score .nm{font-size:13px;font-weight:700;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+.score .nm i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-end:5px;vertical-align:middle}
+.score.p1 .nm i{background:var(--red)} .score.p2 .nm i{background:var(--blue)}
+.score b{font-size:clamp(24px,4.2vh,34px);font-weight:900;line-height:1;display:inline-block}
+.score.p1 b{color:var(--red)} .score.p2 b{color:var(--blue)}
+.score.active.p1{border-color:var(--red);box-shadow:0 0 18px rgba(255,77,94,.45)}
+.score.active.p2{border-color:var(--blue);box-shadow:0 0 18px rgba(61,165,255,.45)}
+.score b.bump{animation:bump .9s cubic-bezier(.2,1.6,.4,1)}
+@keyframes bump{0%{transform:scale(1)}25%{transform:scale(2.2);text-shadow:0 0 20px currentColor}100%{transform:scale(1)}}
+.net{width:12px;height:12px;border-radius:50%;background:#888;flex:none}
+.net.ok{background:#3ddc84;box-shadow:0 0 10px #3ddc84}.net.bad{background:#ff4d5e;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.3}}
+.turn{margin:4px auto 0;padding:8px 16px;border-radius:999px;font-size:15px;font-weight:700;background:rgba(0,0,0,.3);border:1px solid var(--line);
+  max-width:calc(100% - 24px);text-align:center;transition:background .25s,border-color .25s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.turn.p1{background:rgba(255,77,94,.18);border-color:rgba(255,77,94,.6)}
+.turn.p2{background:rgba(61,165,255,.18);border-color:rgba(61,165,255,.6)}
+.turn .pen{color:var(--gold);font-weight:900}
+.turn .warn{color:#ff8a95;font-weight:900;animation:blink .8s infinite}
+.dots::after{content:'';display:inline-block;width:1.2em;text-align:start;animation:dots 1.2s steps(4) infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+.board-wrap.quake{animation:quake .75s}
+@keyframes quake{10%{transform:translate(-9px,5px) rotate(-1.2deg)}20%{transform:translate(9px,-6px) rotate(1deg)}30%{transform:translate(-7px,6px)}40%{transform:translate(6px,-3px)}55%{transform:translate(-4px,3px)}70%{transform:translate(3px,-2px)}85%{transform:translate(-1px,1px)}}
+.board-wrap.danger::after{content:"";position:absolute;inset:0;border-radius:24px;box-shadow:inset 0 0 70px rgba(255,40,60,.55);animation:blink 1s infinite;pointer-events:none}
+#board{width:100%;height:100%;touch-action:none;overflow:visible;display:block}
+.bar{display:flex;gap:8px;justify-content:center;align-items:center;padding:6px 12px 12px;flex-wrap:wrap}
+.bar button{padding:11px 16px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-size:15px;font-weight:700}
+.bar button:disabled{opacity:.35}
+.emo{display:flex;gap:4px}
+.emo button{padding:8px 10px;font-size:20px}
+
+/* ---------- SVG board ---------- */
+.fl{fill:none;stroke:rgba(255,255,255,.42);stroke-width:2.5;stroke-dasharray:7 9;stroke-linecap:round}
+.net-area{fill:url(#netp);stroke:none}
+.net-frame{fill:none;stroke:rgba(255,255,255,.75);stroke-width:3;stroke-dasharray:8 7;stroke-linecap:round}
+.net-glow{opacity:0;pointer-events:none}
+.net-glow.on{animation:netglow 1.4s ease-out}
+@keyframes netglow{0%{opacity:.95}100%{opacity:0}}
+.dot{fill:#fff}
+.dot.g1{fill:var(--red)} .dot.g2{fill:var(--blue)}
+.ring{fill:none;stroke-width:3}
+.ring.g1{stroke:var(--red)} .ring.g2{stroke:var(--blue)}
+.lbl{font:800 15px Vazirmatn,sans-serif;text-anchor:middle}
+.lbl.p1{fill:var(--red)} .lbl.p2{fill:var(--blue)}
+.coord{font:600 12px monospace;fill:rgba(255,255,255,.65);text-anchor:middle;direction:ltr}
+.edge{stroke-width:7;stroke-linecap:round;filter:url(#glow)}
+.edge.p1{stroke:var(--red)} .edge.p2{stroke:var(--blue)}
+.edge.last{stroke-width:9}
+.edge.fresh{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .28s ease-out forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.gm line{stroke-width:6;stroke-linecap:round}
+.gm.p1 line{stroke:var(--red)} .gm.p2 line{stroke:var(--blue)}
+.gm circle{stroke:#fff;stroke-width:4}
+.gm.p1 circle{fill:var(--red)} .gm.p2 circle{fill:var(--blue)}
+.gm text{fill:#fff;font:900 30px Vazirmatn,sans-serif;text-anchor:middle;dominant-baseline:central;direction:ltr}
+.gm.fresh line{stroke-dasharray:1;stroke-dashoffset:1;animation:draw .4s ease-out forwards}
+.gm.fresh .gc{animation:pop .7s .25s cubic-bezier(.2,1.8,.4,1) both;transform-box:fill-box;transform-origin:center}
+@keyframes pop{from{opacity:0;transform:scale(.2)}}
+.tgt{fill:rgba(255,255,255,.12);stroke-width:4;animation:pulse 1.1s ease-in-out infinite;transform-box:fill-box;transform-origin:center;pointer-events:none}
+.tgt.p1{stroke:var(--red)} .tgt.p2{stroke:var(--blue)}
+.tgt.danger{stroke-dasharray:6 5;fill:rgba(255,40,60,.25)}
+.tgt.trap{stroke:var(--gold);fill:rgba(255,209,102,.3);stroke-width:5}
+@keyframes pulse{50%{transform:scale(1.35);opacity:.55}}
+.hit{fill:transparent;cursor:pointer}
+#ball{transition:transform .34s cubic-bezier(.3,.8,.3,1.15);pointer-events:none}
+#ball.fly{transition:transform .42s cubic-bezier(.5,0,.7,.4)}
+#ball.slow{transition:transform .7s cubic-bezier(.4,1.4,.5,1)}
+#ball .halo{fill:none;stroke-width:4;opacity:.9}
+#ball.p1 .halo{stroke:var(--red)} #ball.p2 .halo{stroke:var(--blue)}
+#ball.done .halo{stroke:#fff;opacity:.5}
+#ballSpin{transition:transform .4s ease-out;transform-box:fill-box;transform-origin:center}
+#ballHop.shake{animation:shake .4s}
+#ballHop.hop{animation:hop .7s ease-in-out}
+@keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+@keyframes hop{50%{transform:scale(1.9)}}
+#spotDim{opacity:0;transition:opacity .35s;pointer-events:none}
+#spotDim.on{opacity:1}
+
+/* ---------- Over card (board stays visible) ---------- */
+.over-card{width:calc(100% - 20px);max-width:620px;margin:0 auto calc(10px + env(safe-area-inset-bottom));background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:12px 14px;
+  box-shadow:0 -10px 40px rgba(0,0,0,.45);animation:up .5s cubic-bezier(.2,1.3,.4,1)}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.oc-head{display:flex;align-items:center;gap:12px}
+.oc-icon{font-size:44px;line-height:1;animation:trophy 1.4s ease-in-out infinite}
+@keyframes trophy{50%{transform:translateY(-5px) rotate(-8deg) scale(1.08)}}
+.oc-title{font-size:22px;font-weight:900}
+.oc-score{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-weight:800;font-size:15px;color:var(--muted);margin-top:4px}
+.sl{display:inline-flex;align-items:center;gap:6px;unicode-bidi:isolate;font-weight:900;vertical-align:middle}
+.sl b{font-size:1.25em} .sl b.r{color:var(--red)} .sl b.b{color:var(--blue)} .sl i{font-style:normal;color:var(--muted)}
+.oc-score .sl b{font-size:24px}
+.oc-note{font-size:13px;color:#3ddc84;margin-top:6px}
+.oc-btns{display:flex;gap:8px;margin-top:10px}
+.oc-btns button{flex:1;min-width:0;padding:12px 6px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-weight:800;font-size:15px;white-space:nowrap}
+.oc-btns button.primary{flex:1.4;background:linear-gradient(180deg,#ffd166,#f4a93a);color:#2b1c00;border:0}
+
+/* ---------- Overlays / FX ---------- */
+#flashBg{position:fixed;inset:0;pointer-events:none;z-index:29;opacity:0}
+#flashBg.on{animation:bgflash 1.3s ease-out}
+@keyframes bgflash{0%{opacity:.9}100%{opacity:0}}
+#flash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;z-index:31;text-align:center;padding:16px}
+.goal-txt{font-size:min(30vw,26vh,180px);font-weight:900;line-height:1.1;color:var(--c);-webkit-text-stroke:4px #fff;paint-order:stroke fill;
+  text-shadow:0 0 40px var(--c),0 12px 40px rgba(0,0,0,.7);animation:goalIn 2.1s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes goalIn{0%{transform:scale(.1) rotate(-18deg);opacity:0}14%{transform:scale(1.3) rotate(5deg);opacity:1}22%{transform:scale(.92) rotate(-3deg)}30%{transform:scale(1.06) rotate(1deg)}38%{transform:scale(1) rotate(0)}82%{opacity:1;transform:scale(1)}100%{transform:scale(1.8);opacity:0;filter:blur(8px)}}
+.goal-sub{margin-top:6px;font-size:20px;font-weight:800;background:rgba(0,0,0,.65);border:2px solid var(--c);padding:8px 20px;border-radius:999px;animation:subIn 2.1s ease-out forwards}
+@keyframes subIn{0%,15%{opacity:0;transform:translateY(30px)}28%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0}}
+.stamp{font-size:min(19vw,18vh,110px);font-weight:900;color:#2b1c00;background:var(--gold);padding:2px 30px 8px;border-radius:20px;border:6px solid #fff;
+  box-shadow:0 12px 50px rgba(0,0,0,.6);animation:stamp 1.6s forwards}
+@keyframes stamp{0%{transform:scale(3.2) rotate(-28deg);opacity:0}16%{transform:scale(.9) rotate(-8deg);opacity:1}24%{transform:scale(1.06) rotate(-8deg)}86%{opacity:1;transform:scale(1) rotate(-8deg)}100%{opacity:0;transform:scale(.7) rotate(-8deg)}}
+.stamp-sub{margin-top:14px;font-size:18px;font-weight:800;background:rgba(0,0,0,.65);padding:6px 16px;border-radius:999px;animation:subIn 1.6s ease-out forwards}
+.kick{font-size:min(14vw,12vh,76px);font-weight:900;color:#fff;text-shadow:0 0 30px var(--gold),0 6px 20px rgba(0,0,0,.6);animation:goalIn 1.2s forwards}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);opacity:0;z-index:60;
+  background:rgba(20,20,20,.94);border:1px solid var(--line);padding:10px 18px;border-radius:14px;font-size:15px;transition:all .25s;max-width:calc(100% - 32px);text-align:center;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.err{border-color:var(--red)}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:32;width:100%;height:100%}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.sheet{width:100%;max-width:460px;max-height:88vh;max-height:88dvh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:up .3s ease-out}
+.sheet h2{margin:0 0 12px;font-size:22px}
+.sheet p,.sheet li{line-height:1.9;font-size:15px;color:#d7efe3}
+.sheet ul{padding-inline-start:20px;margin:6px 0}
+.sheet code{direction:ltr;display:inline-block;background:rgba(255,255,255,.1);padding:0 5px;border-radius:5px;font-size:13px}
+.center{text-align:center}
+.room-code{font:800 44px/1.2 monospace;letter-spacing:8px;direction:ltr;color:var(--gold);margin:6px 0 10px}
+.spin{width:30px;height:30px;border:4px solid rgba(255,255,255,.2);border-top-color:var(--gold);border-radius:50%;animation:sp 1s linear infinite;margin:12px auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.set{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);gap:12px}
+.set small{display:block;color:var(--muted);font-size:12px}
+.sw{position:relative;width:52px;height:30px;flex:none;border-radius:99px;background:rgba(255,255,255,.15);transition:.2s}
+.sw::after{content:"";position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+.sw.on{background:#3ddc84}.sw.on::after{right:25px}
+.bubble{position:fixed;font-size:56px;z-index:45;pointer-events:none;animation:floatup 2s ease-out forwards}
+@keyframes floatup{0%{opacity:0;transform:translateY(20px) scale(.5)}15%{opacity:1;transform:scale(1.2)}100%{opacity:0;transform:translateY(-140px)}}
+
+/* ---------- League ---------- */
+.lg-head{display:flex;align-items:center;gap:10px;padding:10px 12px;width:100%;max-width:720px;margin:0 auto}
+.lg-head h2{margin:0;font-size:20px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lg-body{flex:1;overflow-y:auto;padding:4px 12px 24px;max-width:720px;width:100%;margin:0 auto}
+.card{background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 10px;font-size:16px;color:var(--gold)}
+.lg-item{display:flex;align-items:center;gap:10px;width:100%;text-align:right;padding:14px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid var(--line);margin-bottom:8px;font-size:16px}
+.lg-item b{flex:1}
+.lg-item small{color:var(--muted)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{color:var(--muted);font-weight:600;padding:6px 2px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:9px 2px;text-align:center;border-bottom:1px solid rgba(255,255,255,.06)}
+.tbl td.nm{text-align:right;font-weight:700;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbl td.pts{font-weight:900;color:var(--gold);font-size:15px}
+.tbl tr.lead td{background:rgba(255,209,102,.08)}
+.tbl .gd{direction:ltr}
+.champ{text-align:center;font-size:20px;font-weight:900;padding:14px;border-radius:18px;margin-bottom:12px;
+  background:linear-gradient(135deg,rgba(255,209,102,.25),rgba(255,209,102,.05));border:1px solid rgba(255,209,102,.6)}
+.champ div{font-size:44px;animation:trophy 1.4s infinite}
+.round{font-size:12px;color:var(--muted);margin:10px 2px 4px}
+.fx{display:flex;align-items:center;gap:6px;padding:8px 6px;border-radius:12px;background:rgba(255,255,255,.04);margin-bottom:6px;font-size:14px}
+.fx .a,.fx .b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx .b{text-align:left}
+.fx .a::before,.fx .b::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 5px;vertical-align:middle}
+.fx .a::before{background:var(--red)} .fx .b::after{background:var(--blue)}
+.fx .w{font-weight:900;color:#fff}
+.fx .s{font-weight:900;min-width:50px;text-align:center}
+.fx .s.vs{color:var(--muted);font-weight:600}
+.fx button{padding:6px 10px;border-radius:10px;background:var(--gold);color:#2b1c00;font-weight:800;font-size:13px;flex:none}
+.fx button.sim{background:rgba(255,255,255,.12);color:var(--ink)}
+.next{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.next .vs{font-size:18px;font-weight:800}
+.next .vs .r{color:var(--red)} .next .vs .b{color:var(--blue)}
+.prow{display:flex;gap:6px;margin-bottom:6px}
+.prow .txt{flex:1;min-width:0;padding:10px}
+.prow select.txt{flex:none;width:122px;padding:10px 6px;font-size:14px}
+.prow .x{flex:none;width:40px;border-radius:12px;background:rgba(255,77,94,.15);color:#ffb3bb;font-size:16px}
+.stat{display:flex;justify-content:space-between;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.06);font-size:14px}
+.stat span:last-child{direction:ltr;font-weight:700}
+.empty{color:var(--muted);text-align:center;padding:16px;font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- ============ MENU ============ -->
+<section id="menu" class="screen">
+  <div class="menu-card">
+    <div class="logo">⚽</div>
+    <h1>فوتبال نقطه و خط</h1>
+    <p class="sub">Dot Soccer</p>
+
+    <button id="btnResume" class="btn ghost hidden">▶ ادامه بازی قبلی</button>
+    <button class="btn" id="btnLocal">👥 دو نفره رو یه گوشی</button>
+
+    <button class="btn" data-toggle="aiPanel">🤖 بازی با کامپیوتر</button>
+    <div id="aiPanel" class="panel hidden">
+      <label>سطح</label>
+      <div class="seg" id="segLevel">
+        <button data-v="easy">ساده</button><button data-v="medium" class="on">معمولی</button><button data-v="hard">قوی</button>
+      </div>
+      <label>رنگت</label>
+      <div class="seg" id="segColor">
+        <button data-v="1" class="on">🔴 قرمز (اول بازی)</button><button data-v="2">🔵 آبی</button>
+      </div>
+      <button class="btn primary" id="btnAI">بزن بریم!</button>
+    </div>
+
+    <button class="btn super" data-toggle="superPanel">🧠 SUPER AI</button>
+    <div id="superPanel" class="panel hidden">
+      <p>قوی‌ترین حریف. هر بازی که تموم می‌شه یه چیزی یاد می‌گیره و دفعه بعد سخت‌تره!</p>
+      <label>رنگت</label>
+      <div class="seg" id="segColorS">
+        <button data-v="1" class="on">🔴 قرمز (اول بازی)</button><button data-v="2">🔵 آبی</button>
+      </div>
+      <button class="btn super" id="btnSuper">شروع با SUPER AI</button>
+      <div class="mem"><span id="memInfo">—</span><button id="btnMemReset">پاک کردن حافظه</button></div>
+    </div>
+
+    <button class="btn" data-toggle="onPanel">🌐 آنلاین با رفیقت</button>
+    <div id="onPanel" class="panel hidden">
+      <label>اسمت</label>
+      <input id="nickIn" class="txt" maxlength="14" placeholder="مثلاً علی">
+      <button class="btn primary" id="btnHost" style="margin-top:10px">ساختن اتاق و دعوت رفیق</button>
+      <label>یا کد اتاق رفیقتو بزن:</label>
+      <div class="row">
+        <input id="codeIn" class="code" maxlength="5" placeholder="ABCDE" autocomplete="off">
+        <button class="btn" id="btnJoin">ورود</button>
+      </div>
+    </div>
+
+    <button class="btn" id="btnLeague">🏆 لیگ و جدول</button>
+
+    <div class="row small">
+      <button data-modal="rulesModal">📖 قوانین</button>
+      <button data-modal="setModal">⚙️ تنظیمات</button>
+      <button class="snd">🔊 صدا</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GAME ============ -->
+<section id="game" class="screen hidden">
+  <aside class="side">
+    <header class="hud">
+      <button class="icon" id="btnMenu" aria-label="منو">☰</button>
+      <div class="scores">
+        <div class="score p1" id="card1"><span class="nm"><i></i><span id="n1">قرمز</span></span><b id="s1">0</b></div>
+        <div class="score p2" id="card2"><b id="s2">0</b><span class="nm"><i></i><span id="n2">آبی</span></span></div>
+      </div>
+      <span id="net" class="net hidden" title="اتصال"></span>
+      <button class="icon snd" aria-label="صدا">🔊</button>
+    </header>
+    <div class="turn" id="turn">نوبت قرمز</div>
+    <footer class="bar" id="bar">
+      <button id="btnUndo">↶ برگرد</button>
+      <button id="btnRestart">↻ از اول</button>
+      <div class="emo hidden" id="emo">
+        <button>👍</button><button>😂</button><button>😮</button><button>😡</button>
+      </div>
+    </footer>
+    <div class="over-card hidden" id="overCard">
+      <div class="oc-head">
+        <div class="oc-icon" id="ocIcon">🏆</div>
+        <div style="flex:1;min-width:0">
+          <div class="oc-title" id="ocTitle"></div>
+          <div class="oc-score" id="ocScore"></div>
+        </div>
+      </div>
+      <div class="oc-note hidden" id="ocNote">✓ نتیجه رفت تو جدول لیگ</div>
+      <div class="oc-note hidden" id="ocLearn" style="color:var(--purple)">🧠 SUPER AI از این بازی یاد گرفت</div>
+      <div class="oc-btns">
+        <button class="primary" id="btnAgain">دوباره</button>
+        <button id="btnOcLeague" class="hidden">📊 جدول</button>
+        <button id="btnOvMenu">🏠 منو</button>
+      </div>
+    </div>
+  </aside>
+  <main class="board-wrap" id="boardWrap">
+    <svg id="board" viewBox="22 0 556 862" aria-label="زمین بازی">
+      <defs>
+        <pattern id="stripes" width="600" height="100" patternUnits="userSpaceOnUse">
+          <rect width="600" height="50" fill="var(--grass1)"/><rect y="50" width="600" height="50" fill="var(--grass2)"/>
+        </pattern>
+        <pattern id="netp" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="12" height="12" fill="rgba(0,0,0,.25)"/><path d="M0 0H12M0 0V12" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>
+        </pattern>
+        <radialGradient id="ballg" cx="35%" cy="30%"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#cfd8dc"/></radialGradient>
+        <radialGradient id="crowd" cx="50%" cy="50%" r="70%"><stop offset=".6" stop-color="#0a2a1e"/><stop offset="1" stop-color="#03130d"/></radialGradient>
+        <filter id="glow" filterUnits="userSpaceOnUse" x="0" y="0" width="600" height="862"><feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#000" flood-opacity=".45"/></filter>
+        <mask id="spotMask"><rect x="0" y="0" width="600" height="862" fill="#fff"/><circle id="spotHole" cx="300" cy="330" r="75" fill="#000"/></mask>
+      </defs>
+      <g id="lStatic"></g>
+      <g id="lEdges"></g>
+      <g id="lGoals"></g>
+      <g id="lTargets"></g>
+      <rect id="spotDim" x="0" y="0" width="600" height="862" fill="rgba(0,0,0,.62)" mask="url(#spotMask)"/>
+      <g id="ball" class="p1"><g id="ballHop">
+        <circle class="halo" r="25"/>
+        <g id="ballSpin">
+          <circle r="17" fill="url(#ballg)" stroke="#222" stroke-width="2"/>
+          <path d="M0,-7 L6.7,-2.2 L4.1,5.7 L-4.1,5.7 L-6.7,-2.2Z" fill="#222"/>
+          <path d="M0,-7V-17M6.7,-2.2L16,-5M4.1,5.7L10,13.7M-4.1,5.7L-10,13.7M-6.7,-2.2L-16,-5" stroke="#222" stroke-width="1.6"/>
+        </g>
+      </g></g>
+      <g id="lHits"></g>
+    </svg>
+  </main>
+</section>
+
+<!-- ============ LEAGUE ============ -->
+<section id="leagueScr" class="screen hidden">
+  <header class="lg-head">
+    <button class="icon" id="lgBack" aria-label="برگشت">→</button>
+    <h2 id="lgTitle">لیگ‌ها</h2>
+  </header>
+  <div class="lg-body" id="lgBody"></div>
+</section>
+
+<!-- ============ MODALS ============ -->
+<div class="modal hidden" id="rulesModal"><div class="sheet">
+  <h2>📖 قوانین</h2>
+  <ul>
+    <li>زمین ۵×۵ نقطه‌ست و توپ از وسط (<code>dot-33</code>) شروع می‌کنه. <b style="color:var(--red)">قرمز</b> همیشه اول بازی می‌کنه.</li>
+    <li>هر نوبت از جای توپ یه خط به یکی از ۸ نقطه کناری بکش (صاف یا مورب). خطی که یه بار کشیده شده دیگه کشیده نمی‌شه.</li>
+    <li><b>گل:</b> اگه خطت به دروازه خودت برسه، حریف یه امتیاز می‌گیره. توپ برمی‌گرده وسط و نوبت با خودته.<br>
+      دروازه قرمز بالاست، دروازه آبی پایین.</li>
+    <li><b>پنالتی:</b> اگه توپو جایی ببری که حریف هیچ حرکتی نداشته باشه، پنالتی مال توئه: از نقطه پنالتیت (تو زمین حریف) دوباره بازی می‌کنی.<br>
+      پنالتی قرمز <code>dot-43</code> · پنالتی آبی <code>dot-23</code></li>
+    <li>اگه نقطه پنالتی تو بسته باشه، حریف از نقطه پنالتی خودش پنالتی می‌زنه.</li>
+    <li><b>آخر بازی:</b> وقتی دیگه هیچ حرکتی ممکن نباشه. هر کی گل بیشتری گرفته باشه می‌بره؛ امتیاز برابر = مساوی.</li>
+  </ul>
+  <p>💡 نقطه‌های چشمک‌زن = حرکت‌های مجاز · <b style="color:#ff8a95">خط‌چین قرمز</b> = اونجا گل می‌خوری · <b style="color:var(--gold)">حلقه طلایی</b> = حریف گیر می‌افته و پنالتی مال تو می‌شه</p>
+  <button class="btn primary" data-close>فهمیدم</button>
+</div></div>
+
+<div class="modal hidden" id="setModal"><div class="sheet">
+  <h2>⚙️ تنظیمات</h2>
+  <div class="set"><span>صدا</span><button class="sw" data-set="sound"></button></div>
+  <div class="set"><span>لرزش گوشی</span><button class="sw" data-set="vib"></button></div>
+  <div class="set"><span>نشون دادن اسم نقطه‌ها<small>مثل dot-33</small></span><button class="sw" data-set="coords"></button></div>
+  <div class="set"><span>قانون اضافه: گل تو دروازه حریف<small>رسیدن به دروازه حریف هم برای تو گل حساب بشه (از بازی بعدی)</small></span><button class="sw" data-set="oppGoal"></button></div>
+  <button class="btn primary" data-close style="margin-top:16px">بستن</button>
+</div></div>
+
+<div class="modal hidden" id="pauseModal"><div class="sheet">
+  <h2>منو</h2>
+  <button class="btn" data-close>▶ ادامه</button>
+  <button class="btn" data-modal="rulesModal">📖 قوانین</button>
+  <button class="btn" data-modal="setModal">⚙️ تنظیمات</button>
+  <button class="btn" id="btnQuit">🏠 برگشت به منوی اصلی</button>
+</div></div>
+
+<div class="modal hidden" id="roomModal"><div class="sheet center">
+  <h2 id="rmTitle">اتاق بازی</h2>
+  <div id="rmBody"></div>
+  <button class="btn" id="btnRmCancel">بیخیال</button>
+</div></div>
+
+<div class="modal hidden" id="nlModal"><div class="sheet">
+  <h2>➕ لیگ جدید</h2>
+  <span class="fl-lbl">اسم لیگ</span>
+  <input id="nlName" class="txt" maxlength="24" value="لیگ رفقا">
+  <span class="fl-lbl">بازیکن‌ها (حداقل ۲ نفر)</span>
+  <div id="nlPlayers"></div>
+  <div class="row">
+    <button class="btn sm" id="nlAddH">+ بازیکن</button>
+    <button class="btn sm" id="nlAddB">+ ربات 🤖</button>
+  </div>
+  <div class="set"><span>رفت و برگشت<small>هر دو نفر یه بار با قرمز، یه بار با آبی</small></span><button class="sw on" id="nlDouble"></button></div>
+  <button class="btn primary" id="nlCreate" style="margin-top:14px">بساز</button>
+  <button class="btn" data-close>بیخیال</button>
+</div></div>
+
+<div id="flashBg"></div>
+<div id="flash"></div>
+<canvas id="fx"></canvas>
+<div id="toast"></div>
+
+<!-- =========================================================
+     CORE: rules engine + AI (also runs inside the Web Worker)
+     ========================================================= -->
+<script id="core">
+'use strict';
+const idx = (r, c) => (r - 1) * 5 + (c - 1);  // dot-RC -> 0..24
+const RC = i => [(i / 5 | 0) + 1, i % 5 + 1];
+const dotName = i => { const [r, c] = RC(i); return 'dot-' + r + c; };
+const CENTER = idx(3, 3);
+const GOALS = { 1: [idx(1,2), idx(1,3), idx(1,4)], 2: [idx(5,2), idx(5,3), idx(5,4)] };
+const GSET = { 1: Array(25).fill(false), 2: Array(25).fill(false) };
+GOALS[1].forEach(i => GSET[1][i] = true); GOALS[2].forEach(i => GSET[2][i] = true);
+const PEN = { 1: idx(4,3), 2: idx(2,3) };     // each player's penalty spot is in the opponent's half
+const NB = Array.from({ length: 25 }, (_, i) => {
+  const [r, c] = RC(i), a = [];
+  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+    if (!dr && !dc) continue;
+    const R = r + dr, C = c + dc;
+    if (R >= 1 && R <= 5 && C >= 1 && C <= 5) a.push(idx(R, C));
+  }
+  return a;
+});
+const ek = (a, b) => a < b ? a * 25 + b : b * 25 + a; // undirected edge key
+
+function newState(rules, starter) {
+  return { edges: {}, ball: CENTER, turn: starter === 2 ? 2 : 1, starter: starter === 2 ? 2 : 1, scores: { 1: 0, 2: 0 }, goals: [],
+    penalty: false, over: false, winner: 0, last: null, moves: 0,
+    rules: { oppGoal: !!(rules && rules.oppGoal) } };
+}
+const freeFrom = (st, i) => NB[i].filter(j => !st.edges[ek(i, j)]);
+const winnerByScore = st => st.scores[1] > st.scores[2] ? 1 : st.scores[2] > st.scores[1] ? 2 : 0;
+
+function checkMove(st, to) {
+  if (st.over) return 'بازی تموم شده';
+  if (to === st.ball) return null;
+  if (!NB[st.ball].includes(to)) return 'فقط به نقطه‌های کنار توپ می‌تونی خط بکشی';
+  if (st.edges[ek(st.ball, to)]) return 'این خط قبلاً کشیده شده';
+  return '';
+}
+
+/* Applies a legal move; mutates st and returns events for the UI. */
+function applyMove(st, to) {
+  const ev = [], p = st.turn, o = 3 - p, from = st.ball;
+  st.edges[ek(from, to)] = p;
+  st.last = { from, to, p };
+  st.moves++;
+  st.penalty = false;
+  let conceder = 0;
+  if (GSET[p][to]) conceder = p;
+  else if (st.rules.oppGoal && GSET[o][to]) conceder = o;
+  if (conceder) {
+    const scorer = 3 - conceder;
+    st.scores[scorer]++;
+    st.goals.push({ dot: to, conceder, scorer, n: st.scores[scorer] });
+    ev.push({ type: 'goal', conceder, scorer, dot: to });
+    st.ball = CENTER; st.turn = conceder;          // team that conceded kicks off
+    resolveStuck(st, ev, conceder);
+    return ev;
+  }
+  st.ball = to; st.turn = o;
+  resolveStuck(st, ev, p);                         // opponent stuck -> the mover takes a penalty
+  return ev;
+}
+/* Ball has no free line: `first` takes a penalty from their spot; if blocked, the other player does; else game over. */
+function resolveStuck(st, ev, first) {
+  if (st.over || freeFrom(st, st.ball).length) return;
+  const stuck = st.ball;
+  for (const s of [first, 3 - first]) {
+    if (freeFrom(st, PEN[s]).length) {
+      st.ball = PEN[s]; st.turn = s; st.penalty = true;
+      ev.push({ type: 'penalty', player: s, stuck, to: PEN[s] });
+      return;
+    }
+  }
+  st.over = true; st.winner = winnerByScore(st);
+  ev.push({ type: 'over' });
+}
+
+/* ---------------- AI: alpha-beta + typed-array transposition table + iterative deepening ---------------- */
+const AI = (() => {
+  let seed = 2463534242;
+  const r32 = () => { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return seed | 0; };
+  const ZE1 = new Int32Array(625).map(r32), ZE2 = new Int32Array(625).map(r32);
+  const ZB1 = new Int32Array(25).map(r32), ZB2 = new Int32Array(25).map(r32);
+  const ZT1 = r32(), ZT2 = r32();
+  const LEVELS = {
+    sim:    { t: 15,   d: 3,  noise: 120 },
+    easy:   { t: 150,  d: 2,  noise: 350, rnd: .35 },
+    medium: { t: 500,  d: 6,  noise: 70 },
+    hard:   { t: 2500, d: 99, noise: 0 },
+    super:  { t: 3500, d: 99, noise: 0, learn: 1 }
+  };
+  const TIMEOUT = {};
+  const TTN = 1 << 19, TM = TTN - 1;
+  let K1, K2, TV, TD, TF, TB, TS;                 // TT arrays, allocated on first use
+  let E, ball, turn, s1, s2, over, win, opp, h1, h2, ME, deadline, nodes, HIST;
+
+  function hasFree(i) { const n = NB[i]; for (let k = 0; k < n.length; k++) if (!E[ek(i, n[k])]) return true; return false; }
+  function freeCnt(i) { const n = NB[i]; let c = 0; for (let k = 0; k < n.length; k++) if (!E[ek(i, n[k])]) c++; return c; }
+  function setBT(b, t) {
+    if (b !== ball) { h1 ^= ZB1[ball] ^ ZB1[b]; h2 ^= ZB2[ball] ^ ZB2[b]; ball = b; }
+    if (t !== turn) { h1 ^= ZT1; h2 ^= ZT2; turn = t; }
+  }
+  function make(to) {
+    const key = ek(ball, to);
+    const u = [ball, turn, s1, s2, over, win, key, h1, h2];
+    E[key] = 1; h1 ^= ZE1[key]; h2 ^= ZE2[key];
+    const p = turn, o = 3 - p; let c = 0, first;
+    if (GSET[p][to]) c = p; else if (opp && GSET[o][to]) c = o;
+    if (c) { if (c === 1) s2++; else s1++; setBT(CENTER, c); first = c; }
+    else { setBT(to, o); first = p; }
+    if (!hasFree(ball)) {
+      if (hasFree(PEN[first])) setBT(PEN[first], first);
+      else if (hasFree(PEN[3 - first])) setBT(PEN[3 - first], 3 - first);
+      else { over = 1; win = s1 > s2 ? 1 : s2 > s1 ? 2 : 0; }
+    }
+    return u;
+  }
+  function unmake(u) { E[u[6]] = 0; ball = u[0]; turn = u[1]; s1 = u[2]; s2 = u[3]; over = u[4]; win = u[5]; h1 = u[7]; h2 = u[8]; }
+  function gen(tt) {
+    const n = NB[ball], arr = [], sc = [];
+    for (let k = 0; k < n.length; k++) {
+      const j = n[k]; if (E[ek(ball, j)]) continue;
+      let s = HIST[ball * 25 + j];
+      if (j === tt) s += 1e12;
+      if (GSET[turn][j]) s -= 1e10; else if (opp && GSET[3 - turn][j]) s += 1e10;
+      else if (freeCnt(j) === 1) s += 1e9;           // traps the opponent -> penalty
+      let a = arr.length; arr.push(j); sc.push(s);
+      while (a > 0 && sc[a - 1] < s) { arr[a] = arr[a - 1]; sc[a] = sc[a - 1]; a--; }
+      arr[a] = j; sc[a] = s;
+    }
+    return arr;
+  }
+  function terminal(ply) {
+    const d = ME === 1 ? s1 - s2 : s2 - s1;
+    if (d > 0) return 1e6 + d * 1000 - ply * 5;
+    if (d < 0) return -1e6 + d * 1000 + ply * 5;
+    return 0;
+  }
+  function evaluate() {
+    let v = (ME === 1 ? s1 - s2 : s2 - s1) * 1000;
+    const t = turn, n = NB[ball]; let safe = 0, att = 0, trap = 0;
+    for (let k = 0; k < n.length; k++) {
+      const j = n[k]; if (E[ek(ball, j)]) continue;
+      if (!GSET[t][j]) { safe++; if (freeCnt(j) === 1) trap++; }
+      if (opp && GSET[3 - t][j]) att++;
+    }
+    let h = 0;
+    if (att) h += 850;
+    else if (safe === 0) h -= 900;                 // forced to concede next
+    else if (safe === 1) h -= 140;
+    else h += safe * 12;
+    if (trap) h += 110;
+    const r = (ball / 5 | 0) + 1;
+    h += (t === 1 ? r - 1 : 5 - r) * 16;           // far from own goal is good for the side to move
+    h += (hasFree(PEN[t]) ? 35 : 0) - (hasFree(PEN[3 - t]) ? 35 : 0);
+    v += t === ME ? h : -h;
+    return v;
+  }
+  function search(depth, alpha, beta, ply) {
+    if (over) return terminal(ply);
+    if (depth <= 0) return evaluate();
+    if (((++nodes) & 4095) === 0 && performance.now() > deadline) throw TIMEOUT;
+    const ti = h1 & TM, sk = s1 * 64 + s2 + 1;
+    let ttm = -1;
+    if (TS[ti] === sk && K1[ti] === h1 && K2[ti] === h2) {
+      ttm = TB[ti];
+      if (TD[ti] >= depth) {
+        const v = TV[ti], f = TF[ti];
+        if (f === 0) return v;
+        if (f === 1 && v >= beta) return v;
+        if (f === 2 && v <= alpha) return v;
+      }
+    }
+    const ms = gen(ttm);
+    const nd = (ms.length === 1 && ply < 140) ? depth : depth - 1;   // forced-move extension
+    const max = turn === ME, a0 = alpha, b0 = beta, from = ball;
+    let best = max ? -Infinity : Infinity, bm = ms[0];
+    for (let k = 0; k < ms.length; k++) {
+      const u = make(ms[k]);
+      const v = search(nd, alpha, beta, ply + 1);
+      unmake(u);
+      if (max) { if (v > best) { best = v; bm = ms[k]; } if (v > alpha) alpha = v; }
+      else { if (v < best) { best = v; bm = ms[k]; } if (v < beta) beta = v; }
+      if (alpha >= beta) { HIST[from * 25 + ms[k]] += depth * depth; break; }
+    }
+    if (TS[ti] === 0 || K1[ti] !== h1 || K2[ti] !== h2 || TD[ti] <= depth) {
+      TS[ti] = sk; K1[ti] = h1; K2[ti] = h2; TD[ti] = depth; TV[ti] = best; TB[ti] = bm;
+      TF[ti] = best <= a0 ? 2 : best >= b0 ? 1 : 0;
+    }
+    return best;
+  }
+
+  /* ---- Learning memory (SUPER AI only): { games, m: { "h1_h2_mover": [scoreSum, weightSum, count] } } ---- */
+  const LEARN = 650, MAXMEM = 15000, OWN_PEN = 400;
+  let BRAIN = null;
+  function setBrain(b) { BRAIN = b; }
+  function hashOf(st) {
+    let a = 0, b = 0;
+    for (const k in st.edges) { a ^= ZE1[+k]; b ^= ZE2[+k]; }
+    a ^= ZB1[st.ball]; b ^= ZB2[st.ball];
+    if (st.turn === 2) { a ^= ZT1; b ^= ZT2; }
+    return a + '_' + b;
+  }
+  function learn(brain, snaps, fin) {
+    const N = snaps.length; if (!N || !fin.over) return 0;
+    for (let i = 0; i < N; i++) {
+      const mover = snaps[i].turn, after = i + 1 < N ? snaps[i + 1] : fin;
+      const k = hashOf(after) + '_' + mover;
+      const s = fin.winner === 0 ? 0 : fin.winner === mover ? 1 : -1;
+      const wt = .3 + .7 * (i + 1) / N;              // later moves matter more
+      const e = brain.m[k] || (brain.m[k] = [0, 0, 0]);
+      e[0] += s * wt; e[1] += wt; e[2]++;
+    }
+    brain.games = (brain.games || 0) + 1;
+    const keys = Object.keys(brain.m);
+    if (keys.length > MAXMEM) keys.slice(0, keys.length - MAXMEM * .8).forEach(k => delete brain.m[k]);
+    return N;
+  }
+
+  function pick(st, level) {
+    const cfg = typeof level === 'object' ? level : (LEVELS[level] || LEVELS.medium);
+    if (!K1) { K1 = new Int32Array(TTN); K2 = new Int32Array(TTN); TV = new Float64Array(TTN); TD = new Int8Array(TTN); TF = new Int8Array(TTN); TB = new Int8Array(TTN); TS = new Int16Array(TTN); }
+    TS.fill(0);
+    E = new Uint8Array(625); h1 = 0; h2 = 0; let used = 0;
+    for (const k in st.edges) { E[+k] = 1; h1 ^= ZE1[+k]; h2 ^= ZE2[+k]; used++; }
+    ball = st.ball; turn = st.turn; h1 ^= ZB1[ball]; h2 ^= ZB2[ball];
+    if (turn === 2) { h1 ^= ZT1; h2 ^= ZT2; }
+    s1 = st.scores[1]; s2 = st.scores[2]; over = 0; win = 0; opp = st.rules && st.rules.oppGoal ? 1 : 0;
+    ME = turn; HIST = new Float64Array(625); nodes = 0; info.depth = 0; info.mem = 0;
+    const root = gen(-1);
+    if (root.length <= 1) return root[0];
+    if (cfg.rnd && Math.random() < cfg.rnd) {
+      const safe = root.filter(j => !GSET[ME][j]); const pool = safe.length ? safe : root;
+      return pool[Math.random() * pool.length | 0];
+    }
+    deadline = performance.now() + cfg.t;
+    let adj = null;                                  // experience from earlier games
+    if (cfg.learn && BRAIN && BRAIN.m) {
+      for (const m of root) {
+        const u = make(m); const e = BRAIN.m[h1 + '_' + h2 + '_' + ME]; unmake(u);
+        if (e && e[1] > 0) {
+          let a = LEARN * (e[0] / e[1]) * e[2] / (e[2] + 1.5);
+          if (GSET[ME][m]) a = Math.min(a, 0);       // memory may never pull towards conceding
+          (adj = adj || {})[m] = a; info.mem++;
+        }
+      }
+    }
+    // Conceding is only allowed when it is clearly better than every safe move,
+    // so when both kinds exist the root is searched with exact values.
+    const ownCnt = root.filter(j => GSET[ME][j]).length, mixed = ownCnt > 0 && ownCnt < root.length;
+    const exact = cfg.noise > 0 || !!adj || mixed, remaining = 72 - used;
+    let order = root.slice(), best = null;
+    for (let d = 1; d <= cfg.d; d++) {
+      const vals = []; let alpha = -Infinity, done = true;
+      try {
+        for (const m of order) {
+          const u = make(m);
+          let v = search(d - 1, exact ? -Infinity : alpha, Infinity, 1);
+          unmake(u);
+          if (adj && adj[m] && Math.abs(v) < 9e5) v += adj[m];
+          if (mixed && GSET[ME][m] && Math.abs(v) < 9e5) v -= OWN_PEN;
+          vals.push({ m, v }); if (v > alpha) alpha = v;
+        }
+      } catch (e) { if (e !== TIMEOUT) throw e; done = false; }
+      if (!done) {
+        if (vals.length > 1 && best) {
+          const better = vals.slice(1).filter(x => x.v > vals[0].v).sort((a, b) => b.v - a.v)[0];
+          if (better) best = [better];
+        }
+        break;
+      }
+      vals.sort((a, b) => b.v - a.v);
+      best = vals; order = vals.map(x => x.m); info.depth = d;
+      if (vals[0].v > 9e5 || vals[0].v < -9e5 || d > remaining + 4) break;
+    }
+    if (!best) return order[0];
+    info.vals = best.map(x => [x.m, Math.round(x.v)]);
+    if (cfg.noise && best.length > 1) {
+      const pool = best.filter(x => x.v >= best[0].v - cfg.noise);
+      return pool[Math.random() * pool.length | 0].m;
+    }
+    return best[0].m;
+  }
+  const info = { depth: 0, mem: 0, get nodes() { return nodes; } };
+  return { pick, info, learn, setBrain };
+})();
+</script>
+
+<script>
+'use strict';
+/* =========================================================
+   1) HELPERS, STORAGE, SETTINGS
+   ========================================================= */
+const SP = 100, X0 = 100, Y0 = 230;           // board layout in SVG units
+const P = i => [X0 + (i % 5) * SP, Y0 + (i / 5 | 0) * SP];
+const CNAME = { 1: 'قرمز', 2: 'آبی' };
+const COL = { 1: '#ff4d5e', 2: '#3da5ff' };
+const LV = { easy: 'ساده', medium: 'معمولی', hard: 'قوی', super: 'SUPER AI' };
+const aiName = lv => lv === 'super' ? 'SUPER AI' : 'کامپیوتر ' + LV[lv];
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+/* Score pair laid out right-to-left like the scoreboard: red score on the right, blue on the left.
+   Each number is its own box so mixed Persian/English names can't reorder them. */
+const scoreHTML = (s1, s2) => `<span class="sl"><b class="r">${s1}</b><i>-</i><b class="b">${s2}</b></span>`;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('dotsoccer.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('dotsoccer.' + k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem('dotsoccer.' + k); } catch (e) {} }
+};
+const settings = Object.assign({ sound: true, vib: true, coords: false, oppGoal: false, nick: '' }, store.get('settings', {}));
+const saveSettings = () => store.set('settings', settings);
+const SAVEKEY = 'game3';
+
+/* =========================================================
+   2) SOUND (WebAudio, no files)
+   ========================================================= */
+let AC = null;
+function ac() {
+  if (!settings.sound) return null;
+  try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) { return null; }
+  return AC;
+}
+function tone(f, d, type = 'sine', v = .12, delay = 0, f2) {
+  const a = ac(); if (!a) return;
+  const t = a.currentTime + delay, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + d + .05);
+}
+function noise(d, v = .3, freq = 900, q = .6, delay = 0, attack = .25) {
+  const a = ac(); if (!a) return;
+  const len = Math.floor(a.sampleRate * d), b = a.createBuffer(1, len, a.sampleRate), ch = b.getChannelData(0);
+  for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime + delay;
+  f.type = 'bandpass'; f.frequency.setValueAtTime(freq * .6, t); f.frequency.linearRampToValueAtTime(freq * 1.4, t + d * .4); f.Q.value = q;
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + attack); g.gain.setValueAtTime(v, t + d * .5); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+  s.buffer = b; s.connect(f).connect(g).connect(a.destination); s.start(t);
+}
+const SFX = {
+  move() { tone(140, .12, 'sine', .25, 0, 60); tone(700 + Math.random() * 200, .06, 'triangle', .07, .02); },
+  kick() { tone(160, .16, 'sine', .35, 0, 50); noise(.08, .12, 2500, 1, 0, .005); },
+  bad() { tone(170, .18, 'square', .06); },
+  whistle(long) { tone(2300, .13, 'square', .04); tone(2350, long ? .55 : .3, 'square', .04, .18, 2200); },
+  horn(delay = 0) { [233, 294, 349].forEach(f => { tone(f, .9, 'sawtooth', .045, delay); tone(f * 1.005, .9, 'sawtooth', .03, delay); }); },
+  crowd(d = 2.4, v = .32) { noise(d, v, 800, .5); noise(d * .8, v * .6, 1800, .8, .1); },
+  goal() { this.kick(); this.crowd(2.6, .38); this.horn(.15); [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, .25, 'triangle', .09, .1 + i * .08)); },
+  stamp() { tone(90, .3, 'sine', .4, 0, 40); noise(.15, .2, 400, .7, 0, .005); },
+  win() { this.crowd(3.2, .3); [523, 659, 784, 1046, 784, 1046, 1318].forEach((f, i) => tone(f, .32, 'triangle', .12, i * .14)); },
+  lose() { [392, 370, 349, 294].forEach((f, i) => tone(f, i === 3 ? .9 : .35, 'sawtooth', .05, i * .32)); },
+  pop() { tone(900, .08, 'sine', .1, 0, 1400); }
+};
+const vib = p => { if (settings.vib && navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} };
+
+/* =========================================================
+   3) PARTICLE FX (canvas overlay)
+   ========================================================= */
+const FX = (() => {
+  const c = $('#fx'), x = c.getContext('2d'); let ps = [], running = false, dpr = 1;
+  function size() { dpr = Math.min(2, window.devicePixelRatio || 1); c.width = innerWidth * dpr; c.height = innerHeight * dpr; }
+  size(); addEventListener('resize', size);
+  function add(p) { ps.push(p); if (!running) { running = true; requestAnimationFrame(loop); } }
+  function loop() {
+    x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, innerWidth, innerHeight);
+    ps = ps.filter(p => p.life > 0);
+    for (const p of ps) {
+      p.life--; p.x += p.vx; p.y += p.vy; p.vy += p.g; p.vx *= p.drag; p.vy *= p.drag; p.r += p.vr;
+      const a = Math.max(0, Math.min(1, p.life / 25));
+      x.globalAlpha = a; x.fillStyle = p.col;
+      if (p.kind === 'c') { x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); }
+      else { x.beginPath(); x.arc(p.x, p.y, Math.max(.1, p.s * (p.shrink ? a : 1)), 0, 6.283); x.fill(); }
+    }
+    x.globalAlpha = 1;
+    if (ps.length) requestAnimationFrame(loop); else { running = false; x.clearRect(0, 0, innerWidth, innerHeight); }
+  }
+  const pick = a => a[Math.random() * a.length | 0];
+  return {
+    burst(px, py, cols, n = 40, sp = 7, size = 4) {
+      for (let i = 0; i < n; i++) { const an = Math.random() * 6.283, v = sp * (.3 + Math.random());
+        add({ x: px, y: py, vx: Math.cos(an) * v, vy: Math.sin(an) * v, g: .12, drag: .97, r: 0, vr: 0, s: size * (.5 + Math.random()), col: pick(cols), life: 40 + Math.random() * 30, shrink: 1 }); }
+    },
+    confetti(cols, n = 150) {
+      for (let i = 0; i < n; i++) add({ x: Math.random() * innerWidth, y: -20 - Math.random() * innerHeight * .4, vx: (Math.random() - .5) * 4, vy: 2 + Math.random() * 4,
+        g: .05, drag: .995, r: Math.random() * 6.28, vr: (Math.random() - .5) * .3, s: 6 + Math.random() * 7, col: pick(cols), life: 200 + Math.random() * 60, kind: 'c' });
+    },
+    fireworks(cols, bursts = 6) {
+      for (let b = 0; b < bursts; b++) setTimeout(() => {
+        const px = innerWidth * (.15 + Math.random() * .7), py = innerHeight * (.12 + Math.random() * .4);
+        this.burst(px, py, cols, 60, 8, 3.5); SFX.pop();
+      }, b * 320);
+    }
+  };
+})();
+
+/* =========================================================
+   4) GAME STATE & BOARD RENDERING
+   ========================================================= */
+const svg = $('#board'), L = { st: $('#lStatic'), goals: $('#lGoals'), edges: $('#lEdges'), tg: $('#lTargets'), hits: $('#lHits') };
+const ballEl = $('#ball');
+let state = newState(settings);
+const app = {
+  mode: 'local',               // 'local' (same device, may include bots) | 'online'
+  ai: { 1: null, 2: null },    // AI level per side, or null for a human
+  names: { 1: 'قرمز', 2: 'آبی' },
+  league: null,                // { lid, fid } when playing a league fixture
+  busy: false, thinking: false, history: [], gid: 0, seenGoals: 0, spin: 0, recorded: -1
+};
+const humanSides = () => [1, 2].filter(p => app.mode === 'online' ? p === NET.me : !app.ai[p]);
+
+function svgPt(x, y) {
+  const m = svg.getScreenCTM(); if (!m) return { x: innerWidth / 2, y: innerHeight / 2 };
+  const pt = svg.createSVGPoint(); pt.x = x; pt.y = y; return pt.matrixTransform(m);
+}
+
+function drawStatic() {
+  let h = '';
+  h += `<rect x="22" y="0" width="556" height="862" rx="26" fill="url(#crowd)"/>`;
+  h += `<rect x="42" y="96" width="516" height="668" rx="20" fill="url(#stripes)"/>`;
+  h += `<rect class="net-area" x="180" y="128" width="240" height="102" rx="6"/>`;
+  h += `<rect class="net-area" x="180" y="630" width="240" height="102" rx="6"/>`;
+  h += `<path class="net-frame" d="M180 230V128H420V230M180 630V732H420V630"/>`;   // open on the goal-line side
+  h += `<rect id="glowTop" class="net-glow" x="180" y="128" width="240" height="102" rx="6"/>`;
+  h += `<rect id="glowBot" class="net-glow" x="180" y="630" width="240" height="102" rx="6"/>`;
+  h += `<rect class="fl" x="100" y="230" width="400" height="400"/>`;
+  h += `<line class="fl" x1="100" y1="430" x2="500" y2="430"/><circle class="fl" cx="300" cy="430" r="62"/>`;
+  h += `<rect class="fl" x="150" y="230" width="300" height="130"/><rect class="fl" x="150" y="500" width="300" height="130"/>`;
+  h += `<path class="fl" d="M250 360 A55 55 0 0 0 350 360"/><path class="fl" d="M250 500 A55 55 0 0 1 350 500"/>`;
+  h += `<path class="fl" d="M100 244 A14 14 0 0 0 114 230M486 230 A14 14 0 0 0 500 244M100 616 A14 14 0 0 1 114 630M486 630 A14 14 0 0 1 500 616"/>`;
+  h += `<text x="470" y="186" class="lbl p1" style="font-size:14px">دروازه قرمز</text>`;
+  h += `<text x="470" y="684" class="lbl p2" style="font-size:14px">دروازه آبی</text>`;
+  for (let i = 0; i < 25; i++) {
+    const [x, y] = P(i);
+    const g = GSET[1][i] ? 'g1' : GSET[2][i] ? 'g2' : '';
+    if (g) h += `<circle class="ring ${g}" cx="${x}" cy="${y}" r="14"/>`;
+    if (i === PEN[1]) h += `<circle class="ring g1" cx="${x}" cy="${y}" r="13" stroke-dasharray="4 4"/><text class="lbl p1" x="${x + 30}" y="${y + 5}">P</text>`;
+    if (i === PEN[2]) h += `<circle class="ring g2" cx="${x}" cy="${y}" r="13" stroke-dasharray="4 4"/><text class="lbl p2" x="${x + 30}" y="${y + 5}">P</text>`;
+    h += `<circle class="dot ${g}" cx="${x}" cy="${y}" r="${i === CENTER ? 8 : 7}"/>`;
+    if (settings.coords) h += `<text class="coord" x="${x}" y="${y + 30}">${dotName(i)}</text>`;
+  }
+  L.st.innerHTML = h;
+  let hh = '';
+  for (let i = 0; i < 25; i++) { const [x, y] = P(i); hh += `<circle class="hit" data-i="${i}" cx="${x}" cy="${y}" r="46"/>`; }
+  L.hits.innerHTML = hh;
+}
+
+/* Goal markers: a line from the goal dot that leaves the net, ending in a big numbered circle. */
+const FAN = [0, -24, 24, -44, 44, -60, 60];
+function markerGeom(goals) {
+  const cnt = {};
+  return goals.map(g => {
+    const k = cnt[g.dot] = (cnt[g.dot] || 0) + 1;
+    const [x, y] = P(g.dot), dir = (g.dot / 5 | 0) === 0 ? -1 : 1;
+    const ang = FAN[(k - 1) % FAN.length] * Math.PI / 180, len = 168 + Math.floor((k - 1) / FAN.length) * 36;
+    const sc = g.scorer || 3 - g.conceder;
+    return { x1: x, y1: y, x2: x + Math.sin(ang) * len, y2: y + dir * Math.cos(ang) * len, scorer: sc, n: g.n || 0 };
+  });
+}
+
+function canAct() {
+  if (state.over || app.busy) return false;
+  if (app.mode === 'online') return NET.connected && state.turn === NET.me;
+  return !app.ai[state.turn];
+}
+
+function render(opt = {}) {
+  const st = state;
+  let h = '';
+  const lastKey = st.last ? ek(st.last.from, st.last.to) : -1;
+  for (const k in st.edges) {
+    const key = +k, a = key / 25 | 0, b = key % 25;
+    const [x1, y1] = P(a), [x2, y2] = P(b);
+    const cls = 'edge p' + st.edges[k] + (key === lastKey ? ' last' + (opt.animate ? ' fresh' : '') : '');
+    h += `<line class="${cls}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" pathLength="1"/>`;
+  }
+  L.edges.innerHTML = h;
+  // goal markers
+  const geo = markerGeom(st.goals); h = '';
+  let hidden = 0;
+  geo.forEach((g, n) => {
+    const isNew = n >= app.seenGoals;
+    if (isNew && opt.hideNew) { hidden++; return; }
+    h += `<g class="gm p${g.scorer}${isNew ? ' fresh' : ''}"><line x1="${g.x1}" y1="${g.y1}" x2="${g.x2.toFixed(1)}" y2="${g.y2.toFixed(1)}" pathLength="1"/>` +
+      `<g class="gc"><circle cx="${g.x2.toFixed(1)}" cy="${g.y2.toFixed(1)}" r="25"/><text x="${g.x2.toFixed(1)}" y="${(g.y2 + 1).toFixed(1)}">${g.n || ''}</text></g></g>`;
+  });
+  if (!opt.hideNew) app.seenGoals = st.goals.length;
+  L.goals.innerHTML = h;
+  // ball
+  let bx, by;
+  if (opt.ballXY) [bx, by] = opt.ballXY; else [bx, by] = P(opt.ball != null ? opt.ball : st.ball);
+  ballEl.style.transform = `translate(${bx}px,${by}px)`;
+  ballEl.setAttribute('class', 'p' + st.turn + (opt.fly ? ' fly' : '') + (opt.slow ? ' slow' : '') + (st.over ? ' done' : ''));
+  // move targets: red dashed = you'd concede, gold = traps the opponent (penalty for you)
+  h = '';
+  let danger = 0;
+  const live = opt.ball == null && !opt.ballXY && !st.over;
+  if (live && canAct()) {
+    const fr = freeFrom(st, st.ball), t = st.turn;
+    const safe = fr.filter(j => !GSET[t][j]).length;
+    danger = safe === 0 ? 2 : safe === 1 && fr.length > 1 ? 1 : 0;
+    for (const j of fr) {
+      const [x, y] = P(j);
+      const own = GSET[t][j];
+      const trap = !own && NB[j].every(k => k === st.ball || st.edges[ek(j, k)]);
+      h += `<circle class="tgt p${t}${own ? ' danger' : trap ? ' trap' : ''}" cx="${x}" cy="${y}" r="17"/>`;
+    }
+  }
+  L.tg.innerHTML = h;
+  $('#boardWrap').classList.toggle('danger', danger === 2);
+  // HUD
+  $('#n1').textContent = app.names[1]; $('#n2').textContent = app.names[2];
+  const sc = { 1: st.scores[1], 2: st.scores[2] };
+  if (hidden) st.goals.slice(app.seenGoals).forEach(g => sc[g.scorer || 3 - g.conceder]--);
+  setScore('#s1', sc[1]); setScore('#s2', sc[2]);
+  $('#card1').classList.toggle('active', !st.over && st.turn === 1);
+  $('#card2').classList.toggle('active', !st.over && st.turn === 2);
+  const tEl = $('#turn'), t = st.turn, nm = app.names[t], humans = humanSides();
+  tEl.className = 'turn' + (st.over ? '' : ' p' + t);
+  let txt;
+  if (st.over) txt = '🏁 بازی تموم شد';
+  else if (app.mode === 'online') txt = !NET.connected ? '<span class="dots">⏳ منتظر رفیقت</span>' : t === NET.me ? 'نوبت توئه' : `<span class="dots">نوبت ${esc(nm)}</span>`;
+  else if (app.ai[t]) txt = `<span class="dots">🤖 ${esc(nm)} داره فکر می‌کنه</span>`;
+  else if (humans.length === 1) txt = 'نوبت توئه';
+  else txt = 'نوبت ' + esc(nm);
+  if (!st.over && st.penalty) txt += ' <span class="pen">· پنالتی!</span>';
+  if (danger === 2) txt += ' <span class="warn">· ⚠️ خطر گل!</span>';
+  else if (danger === 1) txt += ' <span class="warn">· ⚠️ مراقب باش</span>';
+  tEl.innerHTML = txt;
+  const undoable = app.mode === 'local' && humans.length > 0;
+  $('#btnUndo').classList.toggle('hidden', !undoable);
+  $('#btnUndo').disabled = !app.history.length || (app.busy && !app.thinking);
+  $('#emo').classList.toggle('hidden', app.mode !== 'online');
+  $('#net').classList.toggle('hidden', app.mode !== 'online');
+}
+function setScore(sel, v) {
+  const el = $(sel);
+  if (el.textContent !== String(v)) { el.textContent = v; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+}
+
+let toastT = 0;
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
+  clearTimeout(toastT); toastT = setTimeout(() => t.className = '', 2200);
+}
+let flashT = 0;
+function flashHTML(html) {
+  const f = $('#flash'); f.innerHTML = ''; void f.offsetWidth; f.innerHTML = html;
+  clearTimeout(flashT); flashT = setTimeout(() => f.innerHTML = '', 2300);
+}
+function bgFlash(col) { const b = $('#flashBg'); b.style.background = `radial-gradient(circle at 50% 45%, ${col}cc 0%, ${col}55 35%, transparent 75%)`; b.classList.remove('on'); void b.offsetWidth; b.classList.add('on'); }
+function classPulse(el, cls, ms) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), ms); }
+function spinBall() { app.spin += 150 + Math.random() * 120; $('#ballSpin').style.transform = `rotate(${app.spin}deg)`; }
+function sparks(i, p) { const [x, y] = P(i), s = svgPt(x, y); FX.burst(s.x, s.y, [COL[p], '#ffffff'], 12, 3.5, 3); }
+function ballAnim(cls) { const hp = $('#ballHop'); hp.classList.remove('shake', 'hop'); void hp.getBBox(); hp.classList.add(cls); }
+
+/* =========================================================
+   5) EVENT ANIMATIONS (goal / penalty / move)
+   ========================================================= */
+function playEvents(ev, done) {
+  const gid = app.gid; app.busy = true;
+  const T = (ms, f) => setTimeout(() => { if (gid === app.gid) f(); }, ms);
+  const goal = ev.find(e => e.type === 'goal'), pen = ev.find(e => e.type === 'penalty'), over = ev.find(e => e.type === 'over');
+  const last = state.last;
+  if (last) spinBall();
+  if (goal) {
+    const geo = markerGeom(state.goals)[state.goals.length - 1];
+    render({ animate: true, ball: goal.dot, hideNew: true });
+    SFX.kick(); vib(20);
+    T(300, () => { render({ ballXY: [geo.x2, geo.y2], fly: true }); spinBall(); });
+    T(700, () => goalImpact(goal, geo));
+    T(2700, () => { render({ ball: CENTER, slow: true }); SFX.whistle(); });
+    if (pen) T(3200, () => penaltyAnim(pen, T, CENTER, finish));
+    else T(3300, finish);
+  } else if (pen) {
+    render({ animate: true, ball: pen.stuck });
+    SFX.move(); sparks(last.to, last.p);
+    T(320, () => { ballAnim('shake'); SFX.bad(); });
+    T(700, () => penaltyAnim(pen, T, pen.stuck, finish));
+  } else {
+    if (last) { SFX.move(); vib(12); }
+    render({ animate: true });
+    if (last) T(120, () => sparks(last.to, last.p));
+    T(over ? 750 : 280, finish);
+  }
+  function finish() {
+    app.busy = false;
+    render();
+    if (state.over) showOver();
+    done && done();
+  }
+}
+function penaltyAnim(pen, T, fromDot, finish) {
+  const [x, y] = P(pen.to); const hole = $('#spotHole'); hole.setAttribute('cx', x); hole.setAttribute('cy', y);
+  $('#spotDim').classList.add('on');
+  SFX.whistle(true); SFX.stamp(); vib([60, 40, 60]);
+  flashHTML(`<div class="stamp">پنالتی!</div><div class="stamp-sub" style="color:${COL[pen.player]}">${esc(app.names[pen.player])} پنالتی می‌زنه</div>`);
+  T(500, () => { render({ slow: true }); ballAnim('hop'); SFX.kick(); });
+  T(1250, () => { const s = svgPt(x, y); FX.burst(s.x, s.y, ['#ffd166', '#fff', COL[pen.player]], 34, 5, 3); });
+  T(1650, () => { $('#spotDim').classList.remove('on'); finish(); });
+}
+
+function goalImpact(goal, geo) {
+  const col = COL[goal.scorer];
+  classPulse($('#boardWrap'), 'quake', 800);
+  const glow = $(goal.dot < 5 ? '#glowTop' : '#glowBot'); glow.style.fill = col; glow.classList.remove('on'); void glow.getBBox(); glow.classList.add('on');
+  bgFlash(col);
+  const s = svgPt(geo.x2, geo.y2);
+  FX.burst(s.x, s.y, [col, '#ffffff', '#ffd166'], 90, 11, 4.5);
+  FX.confetti([col, '#ffffff', '#ffd166'], 110);
+  SFX.goal(); vib([120, 60, 120, 60, 300]);
+  render({ ballXY: [geo.x2, geo.y2] });   // reveals the new score with a bump
+  flashHTML(`<div class="goal-txt" style="--c:${col}">گــــــل!</div><div class="goal-sub" style="--c:${col}">یه امتیاز برای <bdi>${esc(app.names[goal.scorer])}</bdi> &nbsp; ${scoreHTML(state.scores[1], state.scores[2])}</div>`);
+}
+
+/* =========================================================
+   6) GAME FLOW
+   ========================================================= */
+function onDot(i) {
+  if (!canAct()) {
+    if (!state.over && !app.busy) toast(app.mode === 'online' && !NET.connected ? 'هنوز رفیقت وصل نشده' : 'نوبت تو نیست', true);
+    return;
+  }
+  const err = checkMove(state, i);
+  if (err === null) return;
+  if (err) { toast(err, true); SFX.bad(); vib(30); ballAnim('shake'); return; }
+  if (app.mode === 'online' && NET.role === 'guest') {
+    NET.send({ t: 'move', to: i }); app.busy = true; render();
+    setTimeout(() => { if (app.busy && !state.over) { app.busy = false; render(); } }, 5000);
+    return;
+  }
+  doMove(i);
+}
+
+function doMove(to) {
+  app.history.push(JSON.stringify(state));
+  if (app.history.length > 300) app.history.shift();
+  const ev = applyMove(state, to);
+  if (app.mode === 'online') NET.send({ t: 'state', s: state, ev, mv: true });
+  save();
+  playEvents(ev, afterTurn);
+}
+
+/* AI runs in a Web Worker so the screen never freezes */
+const AIW = (() => {
+  let w = null, id = 0; const cbs = {};
+  try {
+    const src = document.getElementById('core').textContent + '\nself.onmessage=e=>{const d=e.data;if(d.brain){AI.setBrain(d.brain);return;}let m;try{m=AI.pick(d.st,d.level)}catch(x){m=null}self.postMessage({id:d.id,m,mem:AI.info.mem});};';
+    w = new Worker(URL.createObjectURL(new Blob([src], { type: 'application/javascript' })));
+    w.onmessage = e => { const cb = cbs[e.data.id]; delete cbs[e.data.id]; cb && cb(e.data); };
+    w.onerror = () => { w = null; for (const k in cbs) { const cb = cbs[k]; delete cbs[k]; cb(null); } };
+  } catch (e) { w = null; }
+  return {
+    pick(st, level) {
+      return new Promise(res => {
+        const local = () => setTimeout(() => { const m = AI.pick(st, level); res({ m, mem: AI.info.mem }); }, 30);
+        if (!w) return local();
+        const i = ++id; cbs[i] = r => (!r || r.m == null) ? local() : res(r);
+        w.postMessage({ id: i, st, level });
+      });
+    },
+    setBrain(b) { try { w && w.postMessage({ brain: b }); } catch (e) {} }
+  };
+})();
+
+/* SUPER AI memory, kept on this device */
+const Brain = {
+  data: store.get('brain3', { games: 0, m: {} }),
+  push() { AI.setBrain(this.data); AIW.setBrain(this.data); },
+  save() { store.set('brain3', this.data); this.push(); },
+  size() { return Object.keys(this.data.m).length; },
+  reset() { this.data = { games: 0, m: {} }; this.save(); },
+  learnFromGame() {
+    if (!(app.ai[1] === 'super' || app.ai[2] === 'super') || !app.history.length || !state.over) return false;
+    const snaps = app.history.map(s => JSON.parse(s)), fin = JSON.parse(JSON.stringify(state));
+    setTimeout(() => { AI.learn(this.data, snaps, fin); this.save(); }, 900);   // off the critical path
+    return true;
+  }
+};
+Brain.push();
+function memInfo() { $('#memInfo').textContent = `🧠 از ${Brain.data.games || 0} بازی یاد گرفته`; }
+
+function afterTurn() {
+  if (app.mode !== 'local' || state.over) return;
+  const lvl = app.ai[state.turn]; if (!lvl) return;
+  const gid = app.gid, mv = state.moves, t0 = performance.now();
+  app.busy = true; app.thinking = true; render();
+  const minWait = app.ai[1] && app.ai[2] ? 350 : 500;
+  AIW.pick(JSON.parse(JSON.stringify(state)), lvl).then(r => {
+    let m = r.m;
+    setTimeout(() => {
+      if (gid !== app.gid || state.moves !== mv || state.over) return;
+      if (r.mem && lvl === 'super' && app.memToast !== app.gid) { app.memToast = app.gid; toast('🧠 SUPER AI این موقعیتو یادشه!'); }
+      app.busy = false; app.thinking = false;
+      if (m == null || checkMove(state, m)) m = freeFrom(state, state.ball)[0];
+      doMove(m);
+    }, Math.max(0, minWait - (performance.now() - t0)));
+  });
+}
+
+function save() {
+  if (app.mode === 'online') return;
+  if (state.over) { store.del(SAVEKEY); return; }
+  store.set(SAVEKEY, { cfg: { ai: app.ai, names: app.names, league: app.league }, state, history: app.history.slice(-80) });
+}
+
+function showScreen(id) { ['menu', 'game', 'leagueScr'].forEach(s => $('#' + s).classList.toggle('hidden', s !== id)); }
+
+function startGame(cfg = {}) {
+  app.gid++;
+  app.mode = cfg.mode || 'local';
+  app.ai = Object.assign({ 1: null, 2: null }, cfg.ai || {});
+  app.names = Object.assign({ 1: 'قرمز', 2: 'آبی' }, cfg.names || {});
+  app.league = cfg.league || null;
+  app.cfg = { mode: app.mode, ai: app.ai, names: app.names, league: app.league };
+  app.busy = false; app.thinking = false; app.recorded = -1;
+  state = cfg.state || newState(settings, cfg.starter);
+  app.history = cfg.history || [];
+  app.seenGoals = state.goals.length;
+  showScreen('game'); closeModals();
+  $('#overCard').classList.add('hidden'); $('#bar').classList.remove('hidden'); $('#spotDim').classList.remove('on');
+  drawStatic(); render(); save();
+  if (!state.moves && !cfg.quiet) kickoffFlash();
+  setTimeout(afterTurn, state.moves ? 200 : 900);
+}
+
+function kickoffFlash() {
+  SFX.whistle(true);
+  const t = state.turn, who = humanSides().length === 1 && humanSides()[0] === t ? 'تو' : app.names[t];
+  flashHTML(`<div class="kick">⚽ شروع!</div><div class="stamp-sub" style="color:${COL[t]}"><bdi>${esc(who)}</bdi> شروع می‌کنه</div>`);
+}
+/* Who kicks off the next game of a series: last winner; after a draw, whoever didn't start last time. */
+function nextStarter() {
+  const s = state.starter || 1;
+  if (!state.over) return s;
+  return state.winner || (3 - s);
+}
+
+function undo() {
+  if (app.mode === 'online' || !app.history.length || (app.busy && !app.thinking)) return;
+  const humans = humanSides(); if (!humans.length) return;
+  let snap;
+  do { snap = JSON.parse(app.history.pop()); } while (!humans.includes(snap.turn) && app.history.length);
+  if (!humans.includes(snap.turn)) { app.history.push(JSON.stringify(snap)); return; }
+  app.gid++; app.busy = false; app.thinking = false;
+  state = snap; app.seenGoals = state.goals.length;
+  $('#overCard').classList.add('hidden'); $('#bar').classList.remove('hidden');
+  SFX.pop(); render(); save();
+}
+
+function restart() {
+  if (app.mode === 'online') {
+    if (NET.role === 'host') NET.newRound();
+    else { NET.send({ t: 'rematch' }); toast('درخواست بازی دوباره رفت'); }
+    return;
+  }
+  if (app.league) { const l = League.get(app.league.lid); const f = l && l.fixtures.find(x => x.id === app.league.fid);
+    if (f && f.res) { const nx = League.nextFixture(l); if (nx) return League.play(l.id, nx.id); return League.open(l.id); } }
+  startGame(Object.assign({}, app.cfg, { starter: nextStarter() }));
+}
+
+function toMenu() {
+  app.gid++;
+  NET.close();
+  closeModals();
+  showScreen('menu'); memInfo();
+  $('#btnResume').classList.toggle('hidden', !store.get(SAVEKEY, null));
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+}
+
+/* ---------- Game over ---------- */
+function showOver() {
+  const st = state, w = st.winner;
+  const humans = humanSides();
+  const viewer = humans.length === 1 ? humans[0] : 0;      // vs computer / online: "you"
+  let title, icon, happy = true;
+  if (w === 0) { title = 'مساوی شد'; icon = '🤝'; }
+  else if (viewer) {
+    if (viewer === w) { title = 'بردی! 🎉'; icon = '🏆'; }
+    else { title = 'باختی!'; icon = app.mode === 'online' ? '😅' : '🤖'; happy = false; }
+  } else { title = `<span style="color:${COL[w]}">${esc(app.names[w])}</span> برد!`; icon = '🏆'; }
+  $('#ocIcon').textContent = icon; $('#ocTitle').innerHTML = title;
+  $('#ocScore').innerHTML = `<bdi style="color:var(--red)">${esc(app.names[1])}</bdi>${scoreHTML(st.scores[1], st.scores[2])}<bdi style="color:var(--blue)">${esc(app.names[2])}</bdi>`;
+  if (app.recorded !== app.gid) {
+    app.recorded = app.gid;
+    if (app.league) League.record(app.league.lid, app.league.fid, st);
+    Stats.record(st, viewer);
+    app.learned = Brain.learnFromGame();
+  }
+  $('#ocNote').classList.toggle('hidden', !app.league);
+  $('#ocLearn').classList.toggle('hidden', !app.learned);
+  $('#btnOcLeague').classList.toggle('hidden', !app.league);
+  let againLbl = 'دوباره';
+  if (app.league) { const l = League.get(app.league.lid); againLbl = l && League.nextFixture(l) ? '⏭ بازی بعدی' : '🏆 جدول نهایی'; }
+  $('#btnAgain').textContent = againLbl;
+  if (happy) {
+    const c = w ? COL[w] : '#ffd166';
+    setTimeout(() => { SFX.win(); FX.fireworks([c, '#ffd166', '#ffffff'], w ? 7 : 3); FX.confetti([c, '#ffd166', '#ffffff'], w ? 180 : 60); bgFlash(c); }, 250);
+  } else setTimeout(() => SFX.lose(), 250);
+  vib([100, 50, 100, 50, 300]);
+  setTimeout(() => { $('#bar').classList.add('hidden'); $('#overCard').classList.remove('hidden'); }, 600);
+}
+
+/* ---------- Stats (auto) ---------- */
+const Stats = {
+  get() { return store.get('stats', { games: 0, ai: {}, online: { w: 0, d: 0, l: 0 }, local: 0 }); },
+  record(st, viewer) {
+    const s = this.get(); s.games++;
+    const r = st.winner === 0 ? 'd' : st.winner === viewer ? 'w' : 'l';
+    if (app.mode === 'online') s.online[r]++;
+    else if (viewer && app.ai[3 - viewer]) { const lv = app.ai[3 - viewer]; s.ai[lv] = s.ai[lv] || { w: 0, d: 0, l: 0 }; s.ai[lv][r]++; }
+    else if (!viewer && humanSides().length === 2) s.local++;
+    store.set('stats', s);
+  }
+};
+
+/* =========================================================
+   7) LEAGUE
+   ========================================================= */
+const League = {
+  all() { return store.get('leagues', []); },
+  saveAll(a) { store.set('leagues', a); },
+  get(id) { return this.all().find(l => l.id === id); },
+  update(id, fn) { const a = this.all(), l = a.find(x => x.id === id); if (l) { fn(l); this.saveAll(a); } return l; },
+  create(name, players, double) {
+    const ids = players.map(p => p.id);
+    const a = [...ids]; if (a.length % 2) a.push(null);
+    const n = a.length, rounds = [];
+    for (let r = 0; r < n - 1; r++) {
+      const ps = [];
+      for (let i = 0; i < n / 2; i++) { const x = a[i], y = a[n - 1 - i]; if (x != null && y != null) ps.push(r % 2 ? [y, x] : [x, y]); }
+      rounds.push(ps); a.splice(1, 0, a.pop());
+    }
+    const fixtures = [];
+    rounds.forEach((ps, ri) => ps.forEach(p => fixtures.push({ id: uid(), a: p[0], b: p[1], round: ri + 1, res: null })));
+    if (double) rounds.forEach((ps, ri) => ps.forEach(p => fixtures.push({ id: uid(), a: p[1], b: p[0], round: rounds.length + ri + 1, res: null })));
+    const l = { id: uid(), name, players, fixtures, created: Date.now() };
+    const all = this.all(); all.unshift(l); this.saveAll(all);
+    return l;
+  },
+  nextFixture(l) { return l.fixtures.find(f => !f.res); },
+  pl(l, id) { return l.players.find(p => p.id === id) || { name: '?' }; },
+  table(l) {
+    const T = {};
+    l.players.forEach(p => T[p.id] = { p, pl: 0, w: 0, d: 0, lo: 0, gf: 0, ga: 0, pts: 0 });
+    l.fixtures.forEach(f => {
+      if (!f.res) return;
+      const A = T[f.a], B = T[f.b]; if (!A || !B) return;
+      A.pl++; B.pl++; A.gf += f.res.s1; A.ga += f.res.s2; B.gf += f.res.s2; B.ga += f.res.s1;
+      if (f.res.w === 1) { A.w++; A.pts += 3; B.lo++; } else if (f.res.w === 2) { B.w++; B.pts += 3; A.lo++; } else { A.d++; B.d++; A.pts++; B.pts++; }
+    });
+    return Object.values(T).sort((x, y) => y.pts - x.pts || (y.gf - y.ga) - (x.gf - x.ga) || y.gf - x.gf || y.w - x.w || x.p.name.localeCompare(y.p.name));
+  },
+  record(lid, fid, st) {
+    this.update(lid, l => { const f = l.fixtures.find(x => x.id === fid); if (f) f.res = { s1: st.scores[1], s2: st.scores[2], w: st.winner, at: Date.now() }; });
+  },
+  play(lid, fid) {
+    const l = this.get(lid); if (!l) return;
+    const f = l.fixtures.find(x => x.id === fid); if (!f) return;
+    const A = this.pl(l, f.a), B = this.pl(l, f.b);
+    startGame({ mode: 'local', ai: { 1: A.bot || null, 2: B.bot || null }, names: { 1: A.name, 2: B.name }, league: { lid, fid } });
+  },
+  simulate(lid, fid) {
+    const l = this.get(lid), f = l && l.fixtures.find(x => x.id === fid); if (!f) return;
+    const st = newState(settings); let n = 0;
+    while (!st.over && n++ < 300) applyMove(st, AI.pick(st, 'sim'));
+    if (!st.over) { st.over = true; st.winner = winnerByScore(st); }
+    this.record(lid, fid, st);
+    const A = this.pl(l, f.a), B = this.pl(l, f.b);
+    toast(`نتیجه: ${A.name} ${st.scores[1]} ، ${B.name} ${st.scores[2]}`);
+    this.open(lid);
+  },
+  botTag(p) { return p.bot ? (p.bot === 'super' ? ' 🧠' : ' 🤖') : ''; },
+  home() {
+    showScreen('leagueScr'); $('#lgTitle').textContent = '🏆 لیگ‌ها'; $('#lgBack').onclick = toMenu;
+    const all = this.all(), s = Stats.get();
+    let h = `<button class="btn primary" id="lgNew">➕ ساختن لیگ جدید</button>`;
+    h += `<div class="card"><h3>لیگ‌های من</h3>`;
+    if (!all.length) h += `<div class="empty">هنوز لیگی نساختی. با رفقات (یا ربات‌ها) یه لیگ بساز؛ نتیجه هر بازی خودش تو جدول ثبت می‌شه.</div>`;
+    all.forEach(l => {
+      const done = l.fixtures.filter(f => f.res).length;
+      h += `<button class="lg-item" data-lid="${l.id}"><span>🏆</span><b>${esc(l.name)}</b><small>${l.players.length} نفر · ${done}/${l.fixtures.length} بازی</small></button>`;
+    });
+    h += `</div><div class="card"><h3>📈 آمار تو</h3>`;
+    h += `<div class="stat"><span>همه بازی‌ها</span><span>${s.games}</span></div>`;
+    ['easy', 'medium', 'hard', 'super'].forEach(lv => { const r = s.ai[lv]; if (r) h += `<div class="stat"><span>با ${aiName(lv)} (برد / مساوی / باخت)</span><span>${r.w} / ${r.d} / ${r.l}</span></div>`; });
+    if (s.online.w + s.online.d + s.online.l) h += `<div class="stat"><span>آنلاین (برد / مساوی / باخت)</span><span>${s.online.w} / ${s.online.d} / ${s.online.l}</span></div>`;
+    if (s.local) h += `<div class="stat"><span>دو نفره رو یه گوشی</span><span>${s.local}</span></div>`;
+    h += `</div>`;
+    $('#lgBody').innerHTML = h;
+    $('#lgNew').onclick = () => openNewLeague();
+    $$('#lgBody [data-lid]').forEach(b => b.onclick = () => this.open(b.dataset.lid));
+  },
+  open(lid) {
+    const l = this.get(lid); if (!l) return this.home();
+    showScreen('leagueScr'); $('#lgTitle').textContent = '🏆 ' + l.name; $('#lgBack').onclick = () => this.home();
+    const tbl = this.table(l), next = this.nextFixture(l), tag = p => this.botTag(p);
+    let h = '';
+    if (!next && tbl.length) h += `<div class="champ"><div>🏆</div>قهرمان: ${esc(tbl[0].p.name)}</div>`;
+    if (next) {
+      const A = this.pl(l, next.a), B = this.pl(l, next.b);
+      h += `<div class="card next"><h3 style="margin:0">⚽ بازی بعدی · هفته ${next.round}</h3>
+        <div class="vs"><span class="r">${esc(A.name)}${tag(A)}</span> &nbsp;vs&nbsp; <span class="b">${esc(B.name)}${tag(B)}</span></div>
+        <button class="btn primary" style="margin:0" data-play="${next.id}">${A.bot && B.bot ? '👀 تماشا' : 'شروع'}</button></div>`;
+    }
+    h += `<div class="card"><h3>📊 جدول</h3><table class="tbl"><thead><tr><th>#</th><th style="text-align:right">بازیکن</th><th>بازی</th><th>برد</th><th>مس</th><th>باخت</th><th>گل</th><th>امتیاز</th></tr></thead><tbody>`;
+    tbl.forEach((r, i) => {
+      h += `<tr class="${i === 0 && r.pl ? 'lead' : ''}"><td>${i === 0 && r.pl ? '👑' : i + 1}</td><td class="nm">${esc(r.p.name)}${tag(r.p)}</td><td>${r.pl}</td><td>${r.w}</td><td>${r.d}</td><td>${r.lo}</td><td class="gd">${r.gf}:${r.ga}</td><td class="pts">${r.pts}</td></tr>`;
+    });
+    h += `</tbody></table></div><div class="card"><h3>🗓️ بازی‌ها</h3>`;
+    let lastRound = 0;
+    l.fixtures.forEach(f => {
+      if (f.round !== lastRound) { lastRound = f.round; h += `<div class="round">هفته ${f.round}</div>`; }
+      const A = this.pl(l, f.a), B = this.pl(l, f.b);
+      const wa = f.res && f.res.w === 1 ? ' w' : '', wb = f.res && f.res.w === 2 ? ' w' : '';
+      h += `<div class="fx"><span class="a${wa}">${esc(A.name)}${tag(A)}</span>`;
+      h += f.res ? `<span class="s">${scoreHTML(f.res.s1, f.res.s2)}</span>` : `<span class="s vs">vs</span>`;
+      h += `<span class="b${wb}">${esc(B.name)}${tag(B)}</span>`;
+      if (!f.res) h += A.bot && B.bot ? `<button class="sim" data-sim="${f.id}" title="نتیجه فوری">⚡</button><button data-play="${f.id}">👀</button>` : `<button data-play="${f.id}">▶</button>`;
+      h += `</div>`;
+    });
+    h += `</div><button class="btn danger" id="lgDel">🗑️ پاک کردن این لیگ</button>`;
+    $('#lgBody').innerHTML = h; $('#lgBody').scrollTop = 0;
+    $$('#lgBody [data-play]').forEach(b => b.onclick = () => { ac(); this.play(lid, b.dataset.play); });
+    $$('#lgBody [data-sim]').forEach(b => b.onclick = () => this.simulate(lid, b.dataset.sim));
+    $('#lgDel').onclick = () => { if (confirm('این لیگ با همه نتیجه‌هاش پاک بشه؟')) { this.saveAll(this.all().filter(x => x.id !== lid)); this.home(); } };
+  }
+};
+
+function playerRow(name, bot) {
+  const d = document.createElement('div'); d.className = 'prow';
+  d.innerHTML = `<input class="txt" maxlength="14" value="${esc(name)}"><select class="txt">
+    <option value="">👤 آدم</option><option value="easy">🤖 ساده</option><option value="medium">🤖 معمولی</option><option value="hard">🤖 قوی</option><option value="super">🧠 SUPER AI</option></select><button class="x">✕</button>`;
+  d.querySelector('select').value = bot || '';
+  d.querySelector('.x').onclick = () => d.remove();
+  $('#nlPlayers').appendChild(d);
+}
+function openNewLeague() {
+  $('#nlPlayers').innerHTML = '';
+  playerRow(settings.nick || 'بازیکن ۱', ''); playerRow('بازیکن ۲', '');
+  $('#nlDouble').classList.add('on');
+  openModal('nlModal');
+}
+$('#nlAddH').onclick = () => playerRow('بازیکن ' + ($('#nlPlayers').children.length + 1), '');
+$('#nlAddB').onclick = () => playerRow('ربات ' + ($('#nlPlayers').children.length + 1), 'medium');
+$('#nlDouble').onclick = () => $('#nlDouble').classList.toggle('on');
+$('#nlCreate').onclick = () => {
+  const players = [...$('#nlPlayers').children].map(r => ({ id: uid(), name: r.querySelector('input').value.trim(), bot: r.querySelector('select').value || null })).filter(p => p.name);
+  if (players.length < 2) return toast('حداقل ۲ نفر لازمه', true);
+  if (new Set(players.map(p => p.name)).size !== players.length) return toast('اسم‌ها باید فرق داشته باشن', true);
+  if (players.length > 12) return toast('حداکثر ۱۲ نفر', true);
+  const l = League.create($('#nlName').value.trim() || 'لیگ', players, $('#nlDouble').classList.contains('on'));
+  $('#nlModal').classList.add('hidden'); SFX.pop();
+  League.open(l.id);
+};
+
+/* modals */
+function openModal(id) { $('#' + id).classList.remove('hidden'); }
+function closeModals() { $$('.modal').forEach(m => { if (m.id !== 'roomModal' || !NET.waiting) m.classList.add('hidden'); }); }
+
+/* =========================================================
+   8) ONLINE MULTIPLAYER (PeerJS free broker + WebRTC P2P)
+   Host = Red (authoritative), Guest = Blue.
+   ========================================================= */
+const NET = {
+  peer: null, conn: null, role: null, me: 0, code: '', connected: false, waiting: false, oppName: 'رفیقت',
+  PREFIX: 'dotsoccer-fa-v1-',
+  ICE: { iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+  ] },
+  load() {
+    return new Promise((res, rej) => {
+      if (window.Peer) return res();
+      const s = document.createElement('script');
+      s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+      s.onload = res; s.onerror = () => rej(new Error('load'));
+      document.head.appendChild(s);
+    });
+  },
+  send(m) { try { if (this.conn && this.conn.open) this.conn.send(m); } catch (e) {} },
+  names() { const n = {}; n[this.me] = 'تو'; n[3 - this.me] = this.oppName || 'رفیقت'; return n; },
+  setStatus(ok) {
+    this.connected = ok;
+    $('#net').className = 'net ' + (ok ? 'ok' : 'bad');
+    if (app.mode === 'online') render();
+  },
+  close() {
+    this.waiting = false;
+    try { this.conn && this.conn.close(); } catch (e) {}
+    try { this.peer && this.peer.destroy(); } catch (e) {}
+    this.peer = this.conn = null; this.connected = false; this.role = null;
+  },
+  code5() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 5; i++) s += a[Math.random() * a.length | 0]; return s; },
+  link() { return location.href.split('?')[0].split('#')[0] + '?room=' + this.code; },
+  newRound() {
+    const starter = nextStarter();
+    app.gid++; state = newState(settings, starter); app.seenGoals = 0; app.busy = false; app.recorded = -1;
+    $('#overCard').classList.add('hidden'); $('#bar').classList.remove('hidden'); closeModals();
+    this.send({ t: 'state', s: state, ev: [], reset: true }); render(); kickoffFlash();
+  },
+
+  async host() {
+    this.close();
+    roomModal('ساختن اتاق', '<div class="spin"></div><p>داره به سرور وصل می‌شه…</p>');
+    try { await this.load(); } catch (e) { roomModal('خطا', '<p>نشد بازی آنلاین رو بیاریم بالا. اینترنتتو چک کن.</p>'); return; }
+    this.role = 'host'; this.me = 1; this.code = this.code5(); this.waiting = true;
+    const peer = this.peer = new Peer(this.PREFIX + this.code, { config: this.ICE });
+    peer.on('open', () => {
+      roomModal('اتاق آماده‌ست', `
+        <p>این کد یا لینکو برای رفیقت بفرست:</p>
+        <div class="room-code">${this.code}</div>
+        <button class="btn primary" id="btnShare">${navigator.share ? '📤 فرستادن لینک' : '📋 کپی لینک'}</button>
+        <div class="spin"></div><p style="color:var(--muted)">منتظر رفیقت… (تو قرمزی)</p>`);
+      $('#btnShare').onclick = () => shareLink();
+    });
+    peer.on('connection', c => { if (this.conn && this.conn !== c) { try { this.conn.close(); } catch (e) {} } this.bind(c); });
+    peer.on('disconnected', () => { try { peer.reconnect(); } catch (e) {} });
+    peer.on('error', e => this.onErr(e));
+  },
+
+  async join(code) {
+    code = (code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length !== 5) { toast('کد اتاق ۵ حرفیه', true); return; }
+    this.close();
+    this.role = 'guest'; this.me = 2; this.code = code; this.waiting = true;
+    roomModal('ورود به اتاق ' + code, '<div class="spin"></div><p>داره وصل می‌شه…</p>');
+    try { await this.load(); } catch (e) { roomModal('خطا', '<p>نشد بازی آنلاین رو بیاریم بالا. اینترنتتو چک کن.</p>'); return; }
+    const peer = this.peer = new Peer({ config: this.ICE });
+    peer.on('open', () => {
+      this.bind(peer.connect(this.PREFIX + code, { reliable: true }));
+      setTimeout(() => {
+        if (this.waiting && this.role === 'guest' && !this.connected) {
+          roomModal('وصل نشد', '<p>نشد به رفیقت وصل بشیم. ببین اتاقش هنوز بازه و دوباره امتحان کن.</p><button class="btn primary" id="btnRetry">دوباره امتحان کن</button>');
+          $('#btnRetry').onclick = () => this.join(code);
+        }
+      }, 20000);
+    });
+    peer.on('disconnected', () => { try { peer.reconnect(); } catch (e) {} });
+    peer.on('error', e => this.onErr(e));
+  },
+
+  bind(c) {
+    this.conn = c;
+    c.on('open', () => {
+      this.waiting = false;
+      $('#roomModal').classList.add('hidden');
+      if (app.mode !== 'online' || $('#game').classList.contains('hidden')) {
+        startGame({ mode: 'online', names: this.names(), state: newState(settings), quiet: this.role === 'guest' });
+      }
+      this.setStatus(true);
+      SFX.pop(); toast('رفیقت وصل شد! ⚽');
+      this.send({ t: 'name', n: settings.nick || '' });
+      if (this.role === 'host') this.send({ t: 'state', s: state, ev: [] });
+      else this.send({ t: 'hello' });
+    });
+    c.on('data', m => this.onData(m));
+    c.on('close', () => {
+      if (this.conn !== c) return;
+      this.setStatus(false); toast('اتصال قطع شد', true);
+      if (this.role === 'guest') {
+        roomModal('اتصال قطع شد', '<p>ارتباط با رفیقت قطع شد.</p><button class="btn primary" id="btnRetry">وصل شو دوباره</button>');
+        $('#btnRetry').onclick = () => this.join(this.code);
+      }
+    });
+    c.on('error', () => {});
+  },
+
+  onData(m) {
+    if (!m || typeof m !== 'object') return;
+    if (m.t === 'emoji') { bubble(String(m.e).slice(0, 4), false); return; }
+    if (m.t === 'name') { this.oppName = String(m.n || '').slice(0, 14) || 'رفیقت'; app.names = this.names(); render(); return; }
+    if (this.role === 'host') {
+      if (m.t === 'hello') this.send({ t: 'state', s: state, ev: [] });
+      else if (m.t === 'move') {
+        if (state.turn !== 2 || app.busy || state.over || checkMove(state, m.to)) { this.send({ t: 'state', s: state, ev: [] }); return; }
+        doMove(m.to);
+      } else if (m.t === 'rematch') {
+        if (state.over || confirm('رفیقت می‌خواد از اول بازی کنید. قبول؟')) this.newRound();
+      }
+    } else if (m.t === 'state' && m.s) {
+      state = m.s; app.busy = false;
+      if (m.reset) { app.gid++; app.seenGoals = 0; app.recorded = -1; $('#overCard').classList.add('hidden'); $('#bar').classList.remove('hidden'); closeModals(); kickoffFlash(); }
+      if (m.mv) playEvents(m.ev || []); else render();
+    }
+  },
+
+  onErr(e) {
+    const t = e && e.type;
+    if (t === 'unavailable-id' && this.role === 'host') { this.host(); return; }
+    if (t === 'peer-unavailable') { this.waiting = false; roomModal('اتاق پیدا نشد', `<p>اتاقی با کد <b>${esc(this.code)}</b> نیست یا بسته شده.</p>`); return; }
+    if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(t)) {
+      if (!this.connected) roomModal('مشکل اینترنت', '<p>نشد به سرور بازی آنلاین وصل بشیم. اینترنت (یا فیلترشکن) رو چک کن و دوباره امتحان کن.</p>');
+      return;
+    }
+    if (!this.connected) toast('خطای اتصال: ' + (t || 'نامشخص'), true);
+  }
+};
+function roomModal(title, body) { $('#rmTitle').textContent = title; $('#rmBody').innerHTML = body; openModal('roomModal'); }
+async function shareLink() {
+  const url = NET.link(), text = `بیا فوتبال نقطه و خط بازی کنیم! کد اتاق: ${NET.code}`;
+  try { if (navigator.share) { await navigator.share({ title: 'فوتبال نقطه و خط', text, url }); return; } } catch (e) { if (e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(url); toast('لینک کپی شد ✓'); } catch (e) { prompt('این لینکو کپی کن:', url); }
+}
+function bubble(e, mine) {
+  const b = document.createElement('div'); b.className = 'bubble'; b.textContent = e;
+  b.style.left = (mine ? 20 : 60) + Math.random() * 20 + '%'; b.style.top = mine ? '62%' : '22%';
+  document.body.appendChild(b); setTimeout(() => b.remove(), 2100); SFX.pop();
+}
+
+/* =========================================================
+   9) WIRING
+   ========================================================= */
+L.hits.addEventListener('pointerup', e => { const t = e.target.closest('.hit'); if (t) { ac(); onDot(+t.dataset.i); } });
+function startVsAI(lv, me) {
+  ac();
+  const ai = { 1: null, 2: null }; ai[3 - me] = lv;
+  const names = {}; names[me] = 'تو'; names[3 - me] = aiName(lv);
+  startGame({ mode: 'local', ai, names });
+}
+$('#btnLocal').onclick = () => { ac(); startGame({ mode: 'local' }); };
+$('#btnAI').onclick = () => startVsAI($('#segLevel .on').dataset.v, +$('#segColor .on').dataset.v);
+$('#btnSuper').onclick = () => startVsAI('super', +$('#segColorS .on').dataset.v);
+$('#btnMemReset').onclick = () => { if (confirm('هر چی SUPER AI یاد گرفته پاک بشه؟')) { Brain.reset(); memInfo(); toast('حافظه پاک شد'); } };
+$('#nickIn').value = settings.nick || '';
+$('#nickIn').addEventListener('change', () => { settings.nick = $('#nickIn').value.trim().slice(0, 14); saveSettings(); });
+$('#btnHost').onclick = () => { ac(); settings.nick = $('#nickIn').value.trim().slice(0, 14); saveSettings(); NET.host(); };
+$('#btnJoin').onclick = () => { ac(); settings.nick = $('#nickIn').value.trim().slice(0, 14); saveSettings(); NET.join($('#codeIn').value); };
+$('#codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnJoin').click(); });
+$('#btnLeague').onclick = () => League.home();
+$('#btnResume').onclick = () => {
+  const g = store.get(SAVEKEY, null); if (!g) return;
+  startGame(Object.assign({ mode: 'local', state: g.state, history: g.history || [] }, g.cfg));
+};
+$('#btnUndo').onclick = undo;
+$('#btnRestart').onclick = () => {
+  if (state.moves && !state.over && app.mode !== 'online' && !confirm('این بازی ول بشه و از اول شروع کنیم؟')) return;
+  if (app.mode !== 'online') startGame(Object.assign({}, app.cfg, { starter: nextStarter() })); else restart();
+};
+$('#btnMenu').onclick = () => openModal('pauseModal');
+$('#btnQuit').onclick = toMenu;
+$('#btnOvMenu').onclick = toMenu;
+$('#btnAgain').onclick = () => { ac(); restart(); };
+$('#btnOcLeague').onclick = () => { if (app.league) League.open(app.league.lid); };
+$('#btnRmCancel').onclick = () => { NET.close(); $('#roomModal').classList.add('hidden'); if (app.mode === 'online') toMenu(); };
+$$('[data-toggle]').forEach(b => b.onclick = () => {
+  const id = b.dataset.toggle; ['aiPanel', 'superPanel', 'onPanel'].forEach(p => $('#' + p).classList.toggle('hidden', p !== id || !$('#' + p).classList.contains('hidden')));
+});
+$$('.seg').forEach(s => s.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  s.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+}));
+$$('[data-modal]').forEach(b => b.onclick = () => { $('#pauseModal').classList.add('hidden'); openModal(b.dataset.modal); });
+$$('[data-close]').forEach(b => b.onclick = () => b.closest('.modal').classList.add('hidden'));
+$$('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m && m.id !== 'roomModal') m.classList.add('hidden'); }));
+function syncSound() {
+  $$('.snd').forEach(b => b.textContent = b.classList.contains('icon') ? (settings.sound ? '🔊' : '🔇') : (settings.sound ? '🔊 صدا روشن' : '🔇 صدا خاموش'));
+  const sw = $('.sw[data-set="sound"]'); if (sw) sw.classList.toggle('on', settings.sound);
+}
+$$('.snd').forEach(b => b.onclick = () => {
+  settings.sound = !settings.sound; saveSettings(); syncSound();
+  if (settings.sound) SFX.pop(); else if (AC) try { AC.suspend(); } catch (e) {}
+  toast(settings.sound ? 'صدا روشن شد' : 'صدا خاموش شد');
+});
+$$('.sw[data-set]').forEach(sw => {
+  const k = sw.dataset.set; sw.classList.toggle('on', !!settings[k]);
+  sw.onclick = () => {
+    settings[k] = !settings[k]; sw.classList.toggle('on', settings[k]); saveSettings();
+    if (k === 'coords') drawStatic();
+    if (k === 'sound') { syncSound(); if (!settings.sound && AC) try { AC.suspend(); } catch (e) {} }
+    if (k === 'oppGoal') toast('از بازی بعدی اعمال می‌شه');
+  };
+});
+$('#emo').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; bubble(b.textContent, true); NET.send({ t: 'emoji', e: b.textContent }); });
+
+syncSound(); memInfo();
+drawStatic(); render();
+$('#btnResume').classList.toggle('hidden', !store.get(SAVEKEY, null));
+const qRoom = new URLSearchParams(location.search).get('room');
+if (qRoom) { $('#codeIn').value = qRoom; $('#onPanel').classList.remove('hidden'); NET.join(qRoom); }
+// Installable app + offline play when hosted (e.g. GitHub Pages). Skipped when opened as a local file.
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+window.DotSoccer = { applyMove, newState, checkMove, freeFrom, AI, League, showOver, render, get state() { return state; }, get app() { return app; } };
+</script>
+</body>
+</html>
