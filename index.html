@@ -279,7 +279,7 @@ input.code{flex:1;min-width:0;padding:13px;border-radius:12px;border:1px solid v
   <div class="menu-card">
     <div class="logo">⚽</div>
     <h1>فوتبال نقطه و خط</h1>
-    <p class="sub">Dot Soccer</p>
+    <p class="sub">Dot Soccer · v2.3</p>
 
     <button id="btnResume" class="btn ghost hidden">▶ ادامه بازی قبلی</button>
     <button class="btn" id="btnLocal">👥 دو نفره رو یه گوشی</button>
@@ -782,6 +782,7 @@ const store = {
 const settings = Object.assign({ sound: true, vib: true, coords: false, oppGoal: false, nick: '' }, store.get('settings', {}));
 const saveSettings = () => store.set('settings', settings);
 const SAVEKEY = 'game3';
+const APP_VERSION = '2.3';
 
 /* =========================================================
    2) SOUND (WebAudio, no files)
@@ -1439,16 +1440,25 @@ const NET = {
   role: null, me: 0, code: '', connected: false, waiting: false, oppName: 'رفیقت',
   clients: [], myId: '', oppId: '', seq: 0, seen: new Map(), lastSeen: 0, timers: [],
   TOPIC: 'dotsoccer-fa-v2/',
-  BROKERS: ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'],
-  LIBS: ['https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js', 'https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js'],
+  BROKERS: ['wss://broker.emqx.io:8084/mqtt', 'wss://broker-cn.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'],
+  // the library ships next to the game (CDNs are often filtered); CDNs are only a fallback
+  LIBS: ['mqtt.min.js', 'https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js', 'https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js'],
+  diag: { lib: 'wait', b: [] },   // what connected, shown on screen so problems can be reported
+  diagHTML() {
+    const ic = s => s === 'ok' ? '✅' : s === 'fail' ? '❌' : '⏳';
+    return `<div id="netDiag" style="font-size:13px;color:var(--muted);margin-top:10px;direction:rtl">برنامه اتصال ${ic(this.diag.lib)} · ` +
+      this.BROKERS.map((_, i) => `سرور ${i + 1} ${ic(this.diag.b[i])}`).join(' · ') + ` · نسخه ${APP_VERSION}</div>`;
+  },
+  showDiag() { const el = $('#netDiag'); if (el) el.outerHTML = this.diagHTML(); },
   async load() {
-    if (window.mqtt) return;
+    if (window.mqtt) { this.diag.lib = 'ok'; return; }
     for (const src of this.LIBS) {
       try {
-        await new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
-        if (window.mqtt) return;
+        await new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); setTimeout(rej, 12000); });
+        if (window.mqtt) { this.diag.lib = 'ok'; this.showDiag(); return; }
       } catch (e) {}
     }
+    this.diag.lib = 'fail'; this.showDiag();
     throw new Error('load');
   },
   send(m) {
@@ -1480,18 +1490,19 @@ const NET = {
 
   /* Connects to all brokers; resolves true as soon as one is connected (false after 10 s). */
   async connect() {
+    this.diag = { lib: 'wait', b: this.BROKERS.map(() => 'wait') }; this.showDiag();
     await this.load();
     this.myId = Math.random().toString(36).slice(2, 10); this.seq = 0; this.seen = new Map();
     const inTopic = this.TOPIC + this.code + (this.role === 'host' ? '/g' : '/h');
     return new Promise(res => {
-      setTimeout(() => res(false), 10000);
-      this.BROKERS.forEach(url => {
+      setTimeout(() => { this.diag.b = this.diag.b.map(s => s === 'ok' ? s : 'fail'); this.showDiag(); res(false); }, 12000);
+      this.BROKERS.forEach((url, i) => {
         let c;
         try {
           c = mqtt.connect(url, { clientId: 'ds_' + this.myId + '_' + Math.random().toString(36).slice(2, 6),
-            keepalive: 20, reconnectPeriod: 2500, connectTimeout: 9000, clean: true });
-        } catch (e) { return; }
-        c.on('connect', () => { c.subscribe(inTopic, { qos: 1 }); res(true); this.heartbeat(); });
+            keepalive: 20, reconnectPeriod: 2500, connectTimeout: 10000, clean: true });
+        } catch (e) { this.diag.b[i] = 'fail'; this.showDiag(); return; }
+        c.on('connect', () => { c.subscribe(inTopic, { qos: 1 }); this.diag.b[i] = 'ok'; this.showDiag(); res(true); this.heartbeat(); });
         c.on('message', (t, buf) => { let m; try { m = JSON.parse(buf.toString()); } catch (e) { return; } this.receive(m); });
         c.on('error', () => {});
         this.clients.push(c);
@@ -1547,7 +1558,9 @@ const NET = {
   },
   netError() {
     this.waiting = false;
-    roomModal('مشکل اینترنت', '<p>نشد به سرور بازی آنلاین وصل بشیم. اینترنت (یا فیلترشکن) رو چک کن و دوباره امتحان کن.</p>');
+    roomModal('مشکل اینترنت', this.diag.lib === 'fail'
+      ? '<p>برنامه اتصال دانلود نشد. صفحه رو یه بار رفرش کن و دوباره امتحان کن.</p>'
+      : '<p>هیچ‌کدوم از سرورهای بازی آنلاین در دسترس نبود. احتمالاً این اینترنت جلوشون رو گرفته؛ با یه اینترنت دیگه (مثلاً وای‌فای) یا فیلترشکن امتحان کن.</p>');
   },
 
   receive(m) {
@@ -1599,7 +1612,7 @@ const NET = {
     }
   }
 };
-function roomModal(title, body) { $('#rmTitle').textContent = title; $('#rmBody').innerHTML = body; openModal('roomModal'); }
+function roomModal(title, body) { $('#rmTitle').textContent = title; $('#rmBody').innerHTML = body + (NET.role ? NET.diagHTML() : ''); openModal('roomModal'); }
 async function shareLink() {
   const url = NET.link(), text = `بیا فوتبال نقطه و خط بازی کنیم! کد اتاق: ${NET.code}`;
   try { if (navigator.share) { await navigator.share({ title: 'فوتبال نقطه و خط', text, url }); return; } } catch (e) { if (e.name === 'AbortError') return; }

@@ -1,7 +1,7 @@
-﻿// Offline support: the game page is fetched fresh when online (so updates show up),
+// Offline support: the game page is fetched fresh when online (so updates show up),
 // and served from cache when there is no internet. Online multiplayer still needs internet.
-const CACHE = 'dotsoccer-v2';
-const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'dotsoccer-v3';
+const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './mqtt.min.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
