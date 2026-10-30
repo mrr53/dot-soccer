@@ -127,6 +127,28 @@ input.code{flex:1;min-width:0;padding:13px;border-radius:12px;border:1px solid v
 .bar button:disabled{opacity:.35}
 .emo{display:flex;gap:4px}
 .emo button{padding:8px 10px;font-size:20px}
+.chat-btn{position:relative;background:rgba(255,209,102,.18)!important;border-color:rgba(255,209,102,.6)!important}
+.badge{position:absolute;top:-7px;left:-7px;min-width:20px;height:20px;line-height:20px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font:800 12px Vazirmatn,sans-serif;animation:pop .4s}
+.chat-sheet{display:flex;flex-direction:column;gap:10px}
+.chat-head{display:flex;justify-content:space-between;align-items:center}
+.chat-head h2{margin:0}
+.chat-log{min-height:170px;max-height:32vh;max-height:32dvh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:10px;background:rgba(0,0,0,.28);border-radius:14px}
+.msg{max-width:82%;padding:7px 12px;border-radius:16px;font-size:15px;line-height:1.6;word-break:break-word;unicode-bidi:plaintext}
+.msg.me{align-self:flex-start;border-bottom-right-radius:4px}
+.msg.them{align-self:flex-end;border-bottom-left-radius:4px}
+.msg.big{font-size:32px;line-height:1.2;padding:0 4px;background:none!important}
+.msg small{display:block;font-size:11px;opacity:.75}
+.chat-emojis{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.chat-emojis button{font-size:24px;padding:6px 0;background:rgba(255,255,255,.06);border-radius:10px}
+.chat-quick{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chat-quick::-webkit-scrollbar{display:none}
+.chat-quick button{flex:none;white-space:nowrap;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-size:13px}
+#chatForm .txt{flex:1;min-width:0}
+#chatForm .btn{margin:0;width:auto;padding:12px 18px}
+#chatPop{position:fixed;top:calc(64px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-16px);opacity:0;z-index:55;pointer-events:none;
+  max-width:calc(100% - 32px);background:rgba(15,15,15,.95);border:2px solid var(--c,#fff);padding:9px 16px;border-radius:16px;font-size:16px;transition:all .25s;unicode-bidi:plaintext}
+#chatPop.show{opacity:1;transform:translateX(-50%);pointer-events:auto;cursor:pointer}
+#chatPop b{color:var(--c,#fff);margin-inline-end:6px}
 
 /* ---------- SVG board ---------- */
 .fl{fill:none;stroke:rgba(255,255,255,.42);stroke-width:2.5;stroke-dasharray:7 9;stroke-linecap:round}
@@ -279,7 +301,7 @@ input.code{flex:1;min-width:0;padding:13px;border-radius:12px;border:1px solid v
   <div class="menu-card">
     <div class="logo">⚽</div>
     <h1>فوتبال نقطه و خط</h1>
-    <p class="sub">Dot Soccer · v2.4</p>
+    <p class="sub">Dot Soccer · v2.5</p>
 
     <button id="btnResume" class="btn ghost hidden">▶ ادامه بازی قبلی</button>
     <button class="btn" id="btnLocal">👥 دو نفره رو یه گوشی</button>
@@ -348,6 +370,7 @@ input.code{flex:1;min-width:0;padding:13px;border-radius:12px;border:1px solid v
       <button id="btnRestart">↻ از اول</button>
       <div class="emo hidden" id="emo">
         <button>👍</button><button>😂</button><button>😮</button><button>😡</button>
+        <button class="chat-btn" id="btnChat" aria-label="چت">💬<span class="badge hidden" id="chatBadge">0</span></button>
       </div>
     </footer>
     <div class="over-card hidden" id="overCard">
@@ -462,6 +485,18 @@ input.code{flex:1;min-width:0;padding:13px;border-radius:12px;border:1px solid v
   <button class="btn primary" id="nlCreate" style="margin-top:14px">بساز</button>
   <button class="btn" data-close>بیخیال</button>
 </div></div>
+
+<div class="modal hidden" id="chatModal"><div class="sheet chat-sheet">
+  <div class="chat-head"><h2>💬 چت</h2><button class="icon" data-close aria-label="بستن">✕</button></div>
+  <div class="chat-log" id="chatLog"></div>
+  <div class="chat-emojis" id="chatEmojis"></div>
+  <div class="chat-quick" id="chatQuick"></div>
+  <form id="chatForm" class="row" autocomplete="off">
+    <input id="chatIn" class="txt" maxlength="120" placeholder="یه چیزی بنویس…" dir="auto">
+    <button class="btn primary" type="submit">بفرست</button>
+  </form>
+</div></div>
+<div id="chatPop"></div>
 
 <div id="flashBg"></div>
 <div id="flash"></div>
@@ -782,7 +817,7 @@ const store = {
 const settings = Object.assign({ sound: true, vib: true, coords: false, oppGoal: false, nick: '' }, store.get('settings', {}));
 const saveSettings = () => store.set('settings', settings);
 const SAVEKEY = 'game3';
-const APP_VERSION = '2.4';
+const APP_VERSION = '2.5';
 
 /* =========================================================
    2) SOUND (WebAudio, no files)
@@ -1478,6 +1513,7 @@ const NET = {
     this.timers.forEach(t => clearInterval(t)); this.timers = [];
     this.clients.forEach(c => { try { c.end(true); } catch (e) {} });
     this.clients = []; this.connected = false; this.role = null; this.oppId = ''; this.lastSeen = 0;
+    if (typeof Chat !== 'undefined') Chat.reset();
   },
   code5() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 5; i++) s += a[Math.random() * a.length | 0]; return s; },
   link() { return location.href.split('?')[0].split('#')[0] + '?room=' + this.code; },
@@ -1591,7 +1627,8 @@ const NET = {
   },
 
   onData(m) {
-    if (m.t === 'emoji') { bubble(String(m.e).slice(0, 4), false); return; }
+    if (m.t === 'emoji') { const e = Array.from(String(m.e)).slice(0, 8).join(''); bubble(e, false); Chat.add(false, e, true); return; }
+    if (m.t === 'chat') { Chat.add(false, String(m.x || '').slice(0, 120)); return; }
     if ((m.t === 'name' || m.t === 'hello') && m.n) { this.oppName = String(m.n).slice(0, 14); app.names = this.names(); render(); }
     if (m.t === 'name') return;
     if (this.role === 'host') {
@@ -1687,7 +1724,62 @@ $$('.sw[data-set]').forEach(sw => {
     if (k === 'oppGoal') toast('از بازی بعدی اعمال می‌شه');
   };
 });
-$('#emo').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; bubble(b.textContent, true); NET.send({ t: 'emoji', e: b.textContent }); });
+$('#emo').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'btnChat') return Chat.open();
+  Chat.emoji(b.textContent);
+});
+
+/* ---------- Online chat: emojis, quick phrases, text ---------- */
+const Chat = {
+  log: [], unread: 0, popT: 0,
+  EMOJIS: ['👍', '👏', '😂', '🤣', '😎', '😏', '😮', '😱', '🤯', '😡', '🤬', '😭', '🥲', '😴', '🤡', '👀',
+           '🔥', '⚽', '🥅', '🏆', '💪', '🙏', '🤝', '❤️', '💔', '🎉', '🤔', '🙄', '😇', '👋', '✌️', '🫡'],
+  QUICK: ['سلام 👋', 'دمت گرم!', 'حرکت خوبی بود 👌', 'بجنب دیگه! ⏰', 'شانس آوردی 😏', 'دیدی گیرت انداختم؟ 😎', 'اوه نه! 😱', 'یه دست دیگه؟', 'GG 🤝', 'خداحافظ 👋'],
+  isOpen() { return !$('#chatModal').classList.contains('hidden'); },
+  open() {
+    openModal('chatModal'); this.unread = 0; this.badge(); this.render();
+    if (matchMedia('(hover:hover)').matches) setTimeout(() => $('#chatIn').focus(), 50);
+  },
+  badge() { const b = $('#chatBadge'); b.textContent = this.unread > 9 ? '9+' : this.unread; b.classList.toggle('hidden', !this.unread); },
+  add(mine, text, isEmoji) {
+    if (!text) return;
+    this.log.push({ mine, text, isEmoji });
+    if (this.log.length > 80) this.log.shift();
+    if (this.isOpen()) this.render();
+    else if (!mine && !isEmoji) { this.unread++; this.badge(); this.pop(text); }
+  },
+  pop(text) {
+    const p = $('#chatPop'), them = 3 - NET.me;
+    p.style.setProperty('--c', COL[them] || '#fff');
+    p.innerHTML = `<b>${esc(NET.oppName || 'رفیقت')}:</b>${esc(text)}`;
+    p.classList.add('show'); SFX.pop(); vib(20);
+    clearTimeout(this.popT); this.popT = setTimeout(() => p.classList.remove('show'), 4500);
+  },
+  render() {
+    const L = $('#chatLog');
+    if (!this.log.length) { L.innerHTML = '<div class="empty">هنوز پیامی نیست. یه سلام بده 👋</div>'; return; }
+    const meC = COL[NET.me] || '#ff4d5e', themC = COL[3 - NET.me] || '#3da5ff';
+    L.innerHTML = this.log.map(m => `<div class="msg ${m.mine ? 'me' : 'them'}${m.isEmoji ? ' big' : ''}" style="background:${(m.mine ? meC : themC)}40">${esc(m.text)}</div>`).join('');
+    L.scrollTop = L.scrollHeight;
+  },
+  send(text) {
+    text = String(text || '').trim().slice(0, 120); if (!text) return;
+    if (!NET.connected) { toast('رفیقت هنوز وصل نیست', true); return; }
+    NET.send({ t: 'chat', x: text }); this.add(true, text); SFX.pop();
+  },
+  emoji(e) {
+    if (!NET.connected) { toast('رفیقت هنوز وصل نیست', true); return; }
+    bubble(e, true); NET.send({ t: 'emoji', e }); this.add(true, e, true);
+  },
+  reset() { this.log = []; this.unread = 0; this.badge(); $('#chatPop').classList.remove('show'); $('#chatModal').classList.add('hidden'); }
+};
+$('#chatEmojis').innerHTML = Chat.EMOJIS.map(e => `<button type="button">${e}</button>`).join('');
+$('#chatQuick').innerHTML = Chat.QUICK.map(q => `<button type="button">${esc(q)}</button>`).join('');
+$('#chatEmojis').addEventListener('click', e => { const b = e.target.closest('button'); if (b) Chat.emoji(b.textContent); });
+$('#chatQuick').addEventListener('click', e => { const b = e.target.closest('button'); if (b) Chat.send(b.textContent); });
+$('#chatForm').addEventListener('submit', e => { e.preventDefault(); Chat.send($('#chatIn').value); $('#chatIn').value = ''; });
+$('#chatPop').addEventListener('click', () => { $('#chatPop').classList.remove('show'); Chat.open(); });
 
 syncSound(); memInfo();
 drawStatic(); render();
