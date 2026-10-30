@@ -1428,27 +1428,35 @@ function openModal(id) { $('#' + id).classList.remove('hidden'); }
 function closeModals() { $$('.modal').forEach(m => { if (m.id !== 'roomModal' || !NET.waiting) m.classList.add('hidden'); }); }
 
 /* =========================================================
-   8) ONLINE MULTIPLAYER (PeerJS free broker + WebRTC P2P)
-   Host = Red (authoritative), Guest = Blue.
+   8) ONLINE MULTIPLAYER (relay through free public MQTT brokers)
+   Both phones connect over secure WebSocket to the same public brokers and talk on a
+   topic named after the room code. There is no direct phone-to-phone link, so it works
+   on mobile networks too. Every message goes out on every broker that connected and
+   duplicates are dropped, so one blocked broker is not a problem.
+   Host = Red (runs the rules), Guest = Blue.
    ========================================================= */
 const NET = {
-  peer: null, conn: null, role: null, me: 0, code: '', connected: false, waiting: false, oppName: 'رفیقت',
-  PREFIX: 'dotsoccer-fa-v1-',
-  ICE: { iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
-  ] },
-  load() {
-    return new Promise((res, rej) => {
-      if (window.Peer) return res();
-      const s = document.createElement('script');
-      s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
-      s.onload = res; s.onerror = () => rej(new Error('load'));
-      document.head.appendChild(s);
-    });
+  role: null, me: 0, code: '', connected: false, waiting: false, oppName: 'رفیقت',
+  clients: [], myId: '', oppId: '', seq: 0, seen: new Map(), lastSeen: 0, timers: [],
+  TOPIC: 'dotsoccer-fa-v2/',
+  BROKERS: ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'],
+  LIBS: ['https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js', 'https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js'],
+  async load() {
+    if (window.mqtt) return;
+    for (const src of this.LIBS) {
+      try {
+        await new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+        if (window.mqtt) return;
+      } catch (e) {}
+    }
+    throw new Error('load');
   },
-  send(m) { try { if (this.conn && this.conn.open) this.conn.send(m); } catch (e) {} },
+  send(m) {
+    if (!this.clients.length) return;
+    m.from = this.myId; m.id = this.myId + ':' + (++this.seq);
+    const topic = this.TOPIC + this.code + (this.role === 'host' ? '/h' : '/g'), data = JSON.stringify(m);
+    this.clients.forEach(c => { try { if (c.connected) c.publish(topic, data, { qos: 1 }); } catch (e) {} });
+  },
   names() { const n = {}; n[this.me] = 'تو'; n[3 - this.me] = this.oppName || 'رفیقت'; return n; },
   setStatus(ok) {
     this.connected = ok;
@@ -1457,9 +1465,9 @@ const NET = {
   },
   close() {
     this.waiting = false;
-    try { this.conn && this.conn.close(); } catch (e) {}
-    try { this.peer && this.peer.destroy(); } catch (e) {}
-    this.peer = this.conn = null; this.connected = false; this.role = null;
+    this.timers.forEach(t => clearInterval(t)); this.timers = [];
+    this.clients.forEach(c => { try { c.end(true); } catch (e) {} });
+    this.clients = []; this.connected = false; this.role = null; this.oppId = ''; this.lastSeen = 0;
   },
   code5() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 5; i++) s += a[Math.random() * a.length | 0]; return s; },
   link() { return location.href.split('?')[0].split('#')[0] + '?room=' + this.code; },
@@ -1470,23 +1478,53 @@ const NET = {
     this.send({ t: 'state', s: state, ev: [], reset: true }); render(); kickoffFlash();
   },
 
+  /* Connects to all brokers; resolves true as soon as one is connected (false after 10 s). */
+  async connect() {
+    await this.load();
+    this.myId = Math.random().toString(36).slice(2, 10); this.seq = 0; this.seen = new Map();
+    const inTopic = this.TOPIC + this.code + (this.role === 'host' ? '/g' : '/h');
+    return new Promise(res => {
+      setTimeout(() => res(false), 10000);
+      this.BROKERS.forEach(url => {
+        let c;
+        try {
+          c = mqtt.connect(url, { clientId: 'ds_' + this.myId + '_' + Math.random().toString(36).slice(2, 6),
+            keepalive: 20, reconnectPeriod: 2500, connectTimeout: 9000, clean: true });
+        } catch (e) { return; }
+        c.on('connect', () => { c.subscribe(inTopic, { qos: 1 }); res(true); this.heartbeat(); });
+        c.on('message', (t, buf) => { let m; try { m = JSON.parse(buf.toString()); } catch (e) { return; } this.receive(m); });
+        c.on('error', () => {});
+        this.clients.push(c);
+      });
+    });
+  },
+  /* Host: "I'm here" + move count. Guest: "hello" until the host answers, then "ping". */
+  heartbeat() {
+    if (this.role === 'host') this.send({ t: 'ping', mv: state.moves });
+    else this.send({ t: this.connected ? 'ping' : 'hello', n: settings.nick || '' });
+  },
+  startTimers() {
+    this.timers.push(setInterval(() => {
+      this.heartbeat();
+      if (this.connected && Date.now() - this.lastSeen > 12000) { this.setStatus(false); toast('ارتباط با رفیقت قطع شد… منتظریم برگرده', true); }
+    }, 3000));
+  },
+
   async host() {
     this.close();
     roomModal('ساختن اتاق', '<div class="spin"></div><p>داره به سرور وصل می‌شه…</p>');
-    try { await this.load(); } catch (e) { roomModal('خطا', '<p>نشد بازی آنلاین رو بیاریم بالا. اینترنتتو چک کن.</p>'); return; }
     this.role = 'host'; this.me = 1; this.code = this.code5(); this.waiting = true;
-    const peer = this.peer = new Peer(this.PREFIX + this.code, { config: this.ICE });
-    peer.on('open', () => {
-      roomModal('اتاق آماده‌ست', `
-        <p>این کد یا لینکو برای رفیقت بفرست:</p>
-        <div class="room-code">${this.code}</div>
-        <button class="btn primary" id="btnShare">${navigator.share ? '📤 فرستادن لینک' : '📋 کپی لینک'}</button>
-        <div class="spin"></div><p style="color:var(--muted)">منتظر رفیقت… (تو قرمزی)</p>`);
-      $('#btnShare').onclick = () => shareLink();
-    });
-    peer.on('connection', c => { if (this.conn && this.conn !== c) { try { this.conn.close(); } catch (e) {} } this.bind(c); });
-    peer.on('disconnected', () => { try { peer.reconnect(); } catch (e) {} });
-    peer.on('error', e => this.onErr(e));
+    let ok = false;
+    try { ok = await this.connect(); } catch (e) {}
+    if (this.role !== 'host') return;                       // cancelled meanwhile
+    if (!ok) { this.netError(); return; }
+    this.startTimers();
+    roomModal('اتاق آماده‌ست', `
+      <p>این کد یا لینکو برای رفیقت بفرست:</p>
+      <div class="room-code">${this.code}</div>
+      <button class="btn primary" id="btnShare">${navigator.share ? '📤 فرستادن لینک' : '📋 کپی لینک'}</button>
+      <div class="spin"></div><p style="color:var(--muted)">منتظر رفیقت… (تو قرمزی)<br>تا رفیقت بیاد این صفحه رو نبند.</p>`);
+    $('#btnShare').onclick = () => shareLink();
   },
 
   async join(code) {
@@ -1495,75 +1533,70 @@ const NET = {
     this.close();
     this.role = 'guest'; this.me = 2; this.code = code; this.waiting = true;
     roomModal('ورود به اتاق ' + code, '<div class="spin"></div><p>داره وصل می‌شه…</p>');
-    try { await this.load(); } catch (e) { roomModal('خطا', '<p>نشد بازی آنلاین رو بیاریم بالا. اینترنتتو چک کن.</p>'); return; }
-    const peer = this.peer = new Peer({ config: this.ICE });
-    peer.on('open', () => {
-      this.bind(peer.connect(this.PREFIX + code, { reliable: true }));
-      setTimeout(() => {
-        if (this.waiting && this.role === 'guest' && !this.connected) {
-          roomModal('وصل نشد', '<p>نشد به رفیقت وصل بشیم. ببین اتاقش هنوز بازه و دوباره امتحان کن.</p><button class="btn primary" id="btnRetry">دوباره امتحان کن</button>');
-          $('#btnRetry').onclick = () => this.join(code);
-        }
-      }, 20000);
-    });
-    peer.on('disconnected', () => { try { peer.reconnect(); } catch (e) {} });
-    peer.on('error', e => this.onErr(e));
+    let ok = false;
+    try { ok = await this.connect(); } catch (e) {}
+    if (this.role !== 'guest' || this.code !== code) return;
+    if (!ok) { this.netError(); return; }
+    this.startTimers();
+    setTimeout(() => {
+      if (this.waiting && this.role === 'guest' && !this.connected && this.code === code) {
+        roomModal('اتاق پیدا نشد', `<p>جوابی از اتاق <b>${esc(code)}</b> نیومد. ببین کد درسته و رفیقت صفحه بازی رو باز نگه داشته.</p><button class="btn primary" id="btnRetry">دوباره امتحان کن</button>`);
+        $('#btnRetry').onclick = () => this.join(code);
+      }
+    }, 15000);
+  },
+  netError() {
+    this.waiting = false;
+    roomModal('مشکل اینترنت', '<p>نشد به سرور بازی آنلاین وصل بشیم. اینترنت (یا فیلترشکن) رو چک کن و دوباره امتحان کن.</p>');
   },
 
-  bind(c) {
-    this.conn = c;
-    c.on('open', () => {
-      this.waiting = false;
-      $('#roomModal').classList.add('hidden');
-      if (app.mode !== 'online' || $('#game').classList.contains('hidden')) {
-        startGame({ mode: 'online', names: this.names(), state: newState(settings), quiet: this.role === 'guest' });
-      }
-      this.setStatus(true);
-      SFX.pop(); toast('رفیقت وصل شد! ⚽');
-      this.send({ t: 'name', n: settings.nick || '' });
-      if (this.role === 'host') this.send({ t: 'state', s: state, ev: [] });
-      else this.send({ t: 'hello' });
-    });
-    c.on('data', m => this.onData(m));
-    c.on('close', () => {
-      if (this.conn !== c) return;
-      this.setStatus(false); toast('اتصال قطع شد', true);
-      if (this.role === 'guest') {
-        roomModal('اتصال قطع شد', '<p>ارتباط با رفیقت قطع شد.</p><button class="btn primary" id="btnRetry">وصل شو دوباره</button>');
-        $('#btnRetry').onclick = () => this.join(this.code);
-      }
-    });
-    c.on('error', () => {});
+  receive(m) {
+    if (!m || typeof m !== 'object' || !m.id || m.from === this.myId) return;
+    if (this.seen.has(m.id)) return;                        // same message via the other broker
+    this.seen.set(m.id, 1);
+    if (this.seen.size > 600) this.seen.delete(this.seen.keys().next().value);
+    if (this.oppId && m.from !== this.oppId) {
+      // a different device: accept only a guest re-joining after going quiet, or a host's fresh state
+      const rejoin = this.role === 'host' && m.t === 'hello' && Date.now() - this.lastSeen > 8000;
+      const newHost = this.role === 'guest' && m.t === 'state';
+      if (!rejoin && !newHost) return;
+    }
+    this.oppId = m.from; this.lastSeen = Date.now();
+    if (!this.connected) this.onOppConnected();
+    this.onData(m);
+  },
+  onOppConnected() {
+    this.waiting = false;
+    $('#roomModal').classList.add('hidden');
+    if (app.mode !== 'online' || $('#game').classList.contains('hidden')) {
+      startGame({ mode: 'online', names: this.names(), state: newState(settings), quiet: this.role === 'guest' });
+    }
+    this.setStatus(true);
+    SFX.pop(); toast('رفیقت وصل شد! ⚽');
+    this.send({ t: 'name', n: settings.nick || '' });
+    if (this.role === 'host') this.send({ t: 'state', s: state, ev: [] });
   },
 
   onData(m) {
-    if (!m || typeof m !== 'object') return;
     if (m.t === 'emoji') { bubble(String(m.e).slice(0, 4), false); return; }
-    if (m.t === 'name') { this.oppName = String(m.n || '').slice(0, 14) || 'رفیقت'; app.names = this.names(); render(); return; }
+    if ((m.t === 'name' || m.t === 'hello') && m.n) { this.oppName = String(m.n).slice(0, 14); app.names = this.names(); render(); }
+    if (m.t === 'name') return;
     if (this.role === 'host') {
-      if (m.t === 'hello') this.send({ t: 'state', s: state, ev: [] });
+      if (m.t === 'hello' || m.t === 'sync') this.send({ t: 'state', s: state, ev: [] });
       else if (m.t === 'move') {
         if (state.turn !== 2 || app.busy || state.over || checkMove(state, m.to)) { this.send({ t: 'state', s: state, ev: [] }); return; }
         doMove(m.to);
       } else if (m.t === 'rematch') {
         if (state.over || confirm('رفیقت می‌خواد از اول بازی کنید. قبول؟')) this.newRound();
       }
-    } else if (m.t === 'state' && m.s) {
-      state = m.s; app.busy = false;
-      if (m.reset) { app.gid++; app.seenGoals = 0; app.recorded = -1; $('#overCard').classList.add('hidden'); $('#bar').classList.remove('hidden'); closeModals(); kickoffFlash(); }
-      if (m.mv) playEvents(m.ev || []); else render();
+    } else {
+      if (m.t === 'ping') { if (m.mv !== state.moves && !app.busy) this.send({ t: 'sync' }); return; }
+      if (m.t === 'state' && m.s) {
+        state = m.s; app.busy = false;
+        if (m.reset) { app.gid++; app.seenGoals = 0; app.recorded = -1; $('#overCard').classList.add('hidden'); $('#bar').classList.remove('hidden'); closeModals(); kickoffFlash(); }
+        if (m.mv) playEvents(m.ev || []); else { app.seenGoals = state.goals.length; render(); if (state.over && $('#overCard').classList.contains('hidden')) showOver(); }
+      }
     }
-  },
-
-  onErr(e) {
-    const t = e && e.type;
-    if (t === 'unavailable-id' && this.role === 'host') { this.host(); return; }
-    if (t === 'peer-unavailable') { this.waiting = false; roomModal('اتاق پیدا نشد', `<p>اتاقی با کد <b>${esc(this.code)}</b> نیست یا بسته شده.</p>`); return; }
-    if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(t)) {
-      if (!this.connected) roomModal('مشکل اینترنت', '<p>نشد به سرور بازی آنلاین وصل بشیم. اینترنت (یا فیلترشکن) رو چک کن و دوباره امتحان کن.</p>');
-      return;
-    }
-    if (!this.connected) toast('خطای اتصال: ' + (t || 'نامشخص'), true);
   }
 };
 function roomModal(title, body) { $('#rmTitle').textContent = title; $('#rmBody').innerHTML = body; openModal('roomModal'); }
