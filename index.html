@@ -279,7 +279,7 @@ input.code{flex:1;min-width:0;padding:13px;border-radius:12px;border:1px solid v
   <div class="menu-card">
     <div class="logo">⚽</div>
     <h1>فوتبال نقطه و خط</h1>
-    <p class="sub">Dot Soccer · v2.3</p>
+    <p class="sub">Dot Soccer · v2.4</p>
 
     <button id="btnResume" class="btn ghost hidden">▶ ادامه بازی قبلی</button>
     <button class="btn" id="btnLocal">👥 دو نفره رو یه گوشی</button>
@@ -782,7 +782,7 @@ const store = {
 const settings = Object.assign({ sound: true, vib: true, coords: false, oppGoal: false, nick: '' }, store.get('settings', {}));
 const saveSettings = () => store.set('settings', settings);
 const SAVEKEY = 'game3';
-const APP_VERSION = '2.3';
+const APP_VERSION = '2.4';
 
 /* =========================================================
    2) SOUND (WebAudio, no files)
@@ -1696,7 +1696,14 @@ const qRoom = new URLSearchParams(location.search).get('room');
 if (qRoom) { $('#codeIn').value = qRoom; $('#onPanel').classList.remove('hidden'); NET.join(qRoom); }
 // Installable app + offline play when hosted (e.g. GitHub Pages). Skipped when opened as a local file.
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => r.update()).catch(() => {}));
+  // when a newer version takes over, reload once so the new game code is used (not during an online game)
+  let hadController = !!navigator.serviceWorker.controller, reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController) { hadController = true; return; }
+    if (reloaded || NET.role) return;
+    reloaded = true; location.reload();
+  });
 }
 window.DotSoccer = { applyMove, newState, checkMove, freeFrom, AI, League, showOver, render, get state() { return state; }, get app() { return app; } };
 </script>
